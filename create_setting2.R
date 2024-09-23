@@ -1,0 +1,108 @@
+source("mein_simul/functions2.R")
+library(tidyverse)
+
+# 시나리오 정의
+scenarios <- list(
+  list(n1 = 60, n2 = 40, rho_params = c(10, 10)),    # rho 평균 약 0.5 (SDR ≈ 1)
+  list(n1 = 50, n2 = 50, rho_params = c(4, 16)),     # rho 평균 약 0.2 (SDR ≈ 2)
+  list(n1 = 40, n2 = 60, rho_params = c(4, 16)),     # rho 평균 약 0.2 (SDR ≈ 2)
+  list(n1 = 40, n2 = 60, rho_params = c(16, 4))      # rho 평균 약 0.8 (SDR ≈ 0.5)
+)
+
+# 효과 크기 설정
+deltas <- c(0, 0.5)
+
+# 설정 생성 함수
+create_settings <- function(scenario, delta, replications) {
+  tibble(
+    setting_scenario = scenario,
+    n1 = scenarios[[scenario]]$n1,
+    n2 = scenarios[[scenario]]$n2,
+    rho_alpha = scenarios[[scenario]]$rho_params[1],
+    rho_beta = scenarios[[scenario]]$rho_params[2],
+    setting_delta = delta,
+    replication = 1:replications,
+    seed = sample.int(1e6, replications)
+  )
+}
+
+# 모든 설정 조합 생성
+settings <- crossing(
+  scenario = 1:4,
+  delta = deltas
+) %>%
+  mutate(
+    settings = map2(scenario, delta, ~create_settings(.x, .y, replications = 1000))
+  ) %>%
+  unnest(settings) %>%
+  select(-scenario, -delta)  # 원래의 scenario와 delta 열 제거
+
+# rho 샘플링 및 표준편차 계산
+grand_sd <- 1  # 전체 표준편차 설정
+settings <- settings %>%
+  rowwise() %>%
+  mutate(
+    rho = rbeta(1, shape1 = rho_alpha, shape2 = rho_beta),
+    sd1 = grand_sd * sqrt(2 / (1 + sqrt(rho / (1 - rho)))),
+    sd2 = grand_sd * sqrt(2 / (1 + sqrt((1 - rho) / rho))),
+    sdr = sd2 / sd1
+  ) %>%
+  ungroup()
+
+# 그룹별 평균 계산
+grand_mean <- 0
+settings <- settings %>%
+  mutate(
+    pooled_sd = pooled_sd(sd1, sd2, n1, n2),
+    mean1 = grand_mean + 0.5 * setting_delta * pooled_sd,
+    mean2 = grand_mean - 0.5 * setting_delta * pooled_sd
+  )
+
+# 검증
+settings <- settings %>%
+  mutate(
+    rho_check = (1/sd1^2) / (1/sd1^2 + 1/sd2^2),
+    sdr_check = sd2 / sd1,
+    delta_check = cohens_d(mean1, mean2, sd1, sd2, n1, n2)
+  )
+
+# 검증 결과 확인
+cat("rho 검증 결과:", all(abs(settings$rho - settings$rho_check) < 1e-10), "\n") #false가 나옴...
+cat("SDR 검증 결과:", all(abs(settings$sdr - settings$sdr_check) < 1e-10), "\n")
+cat("delta 검증 결과:", all(abs(settings$setting_delta - settings$delta_check) < 1e-10), "\n")
+
+
+# 결과 저장
+saveRDS(settings, file = "mein_simul/settings2.RDS")
+
+# 요약 통계 출력
+summary_stats <- settings %>%
+  group_by(setting_scenario, setting_delta) %>%
+  summarise(
+    n1 = first(n1),
+    n2 = first(n2),
+    mean_rho = mean(rho),
+    sd_rho = sd(rho),
+    mean_sdr = mean(sdr),
+    sd_sdr = sd(sdr),
+    .groups = 'drop'
+  )
+
+# 모든 열이 표시되도록 출력 옵션 설정
+options(tibble.width = Inf)
+
+# 요약 통계 출력
+print(summary_stats)
+
+# 출력 옵션 원래대로 복원
+options(tibble.width = NULL)
+
+# rho 분포 시각화
+ggplot(settings, aes(x = rho, fill = factor(setting_scenario))) +
+  geom_density(alpha = 0.5) +
+  facet_wrap(~setting_scenario, scales = "free") +
+  labs(title = "Distribution of rho across scenarios",
+       x = "rho", y = "Density", fill = "Scenario") +
+  theme_minimal()
+
+ggsave("rho_distributions.png", width = 10, height = 8)
