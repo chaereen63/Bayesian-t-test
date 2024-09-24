@@ -3,10 +3,10 @@ library(tidyverse)
 
 # 시나리오 정의
 scenarios <- list(
-  list(n1 = 60, n2 = 40, rho_params = c(10, 10)),    # rho 평균 약 0.5 (SDR ≈ 1)
-  list(n1 = 50, n2 = 50, rho_params = c(4, 16)),     # rho 평균 약 0.2 (SDR ≈ 2)
-  list(n1 = 40, n2 = 60, rho_params = c(4, 16)),     # rho 평균 약 0.2 (SDR ≈ 2)
-  list(n1 = 40, n2 = 60, rho_params = c(16, 4))      # rho 평균 약 0.8 (SDR ≈ 0.5)
+  list(n1 = 60, n2 = 40, rho_params = c(2, 2)),    # rho 평균 약 0.5 (SDR ≈ 1)
+  list(n1 = 50, n2 = 50, rho_params = c(2, 8)),     # rho 평균 약 0.2 (SDR ≈ 2)
+  list(n1 = 40, n2 = 60, rho_params = c(2, 8)),     # rho 평균 약 0.2 (SDR ≈ 2)
+  list(n1 = 40, n2 = 60, rho_params = c(8, 2))      # rho 평균 약 0.8 (SDR ≈ 0.5)
 )
 
 # 효과 크기 설정
@@ -61,17 +61,27 @@ settings <- settings %>%
 # 검증
 settings <- settings %>%
   mutate(
-    rho_check = (1/sd1^2) / (1/sd1^2 + 1/sd2^2),
     sdr_check = sd2 / sd1,
     delta_check = cohens_d(mean1, mean2, sd1, sd2, n1, n2)
   )
 
 # 검증 결과 확인
-cat("rho 검증 결과:", all(abs(settings$rho - settings$rho_check) < 1e-10), "\n") #false가 나옴...
 cat("SDR 검증 결과:", all(abs(settings$sdr - settings$sdr_check) < 1e-10), "\n")
 cat("delta 검증 결과:", all(abs(settings$setting_delta - settings$delta_check) < 1e-10), "\n")
 
+#rho를 어덯게 검증할지는..? 아직 잘 모르겠음.
 
+# 시나리오별 rho 평균 및 분산 확인
+rho_stats <- settings %>%
+  group_by(setting_scenario) %>%
+  summarise(
+    mean_rho = mean(rho),
+    var_rho = var(rho),
+    expected_mean = rho_alpha / (rho_alpha + rho_beta),
+    expected_var = (rho_alpha * rho_beta) / ((rho_alpha + rho_beta)^2 * (rho_alpha + rho_beta + 1))
+  )
+
+print(rho_stats)
 # 결과 저장
 saveRDS(settings, file = "mein_simul/settings2.RDS")
 
