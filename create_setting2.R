@@ -45,7 +45,7 @@ settings <- settings %>%
     rho = rbeta(1, shape1 = rho_alpha, shape2 = rho_beta),
     sd1 = grand_sd * sqrt(2 / (1 + sqrt(rho / (1 - rho)))),
     sd2 = grand_sd * sqrt(2 / (1 + sqrt((1 - rho) / rho))),
-    sdr = sd2 / sd1
+    sdr = ((1-rho)/rho)^(1/2)
   ) %>%
   ungroup()
 
@@ -61,7 +61,7 @@ settings <- settings %>%
 # 검증
 settings <- settings %>%
   mutate(
-    sdr_check = sd2 / sd1,
+    sdr_check = ((1-rho)/rho)^(1/2),
     delta_check = cohens_d(mean1, mean2, sd1, sd2, n1, n2)
   )
 
