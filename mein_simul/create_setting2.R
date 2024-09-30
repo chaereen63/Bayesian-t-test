@@ -1,4 +1,4 @@
-source("simulation/functions.R")
+source("functions2.R")
 library(tidyverse)
 
 # 시나리오 정의
@@ -32,9 +32,10 @@ settings <- crossing(
   delta = deltas
 ) %>%
   mutate(
-    settings = map2(scenario, delta, ~create_settings(.x, .y, replications = 1000))
+    settings = map2(scenario, delta, ~create_settings(.x, .y, replications = 100)) #pilot으로 replications를 줄임
   ) %>%
-  unnest(settings, names_repair = "unique")
+  select(-delta,-scenario) %>%  # crossing에서 생성된 delta 열 제거
+  unnest(settings)
 
 # rho 샘플링 및 표준편차 계산
 settings <- settings %>%
@@ -70,7 +71,7 @@ all(abs(settings$rho - settings$rho_check) < 1e-10)
 all(abs(settings$delta - settings$delta_check) < 1e-10)
 
 # 결과 저장
-saveRDS(settings, file = "simulation/settings.RDS")
+saveRDS(settings, file = "settings.RDS")
 
 # 요약 통계 출력
 summary_stats <- settings %>%

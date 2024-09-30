@@ -51,3 +51,30 @@ get_true_model <- function(delta, rho, delta_threshold = 0.1, rho_threshold = 0.
 get_RMSE <- function(estimate, true) {
   return(sqrt(mean((estimate - true)^2)))
 }
+
+# Helper functions for simulation tracking and visualization
+
+get_loop <- function(dir, file) {
+  tracker_file <- file.path(dir, paste0(file, ".txt"))
+  
+  if (file.exists(tracker_file)) {
+    loop <- as.numeric(readLines(tracker_file))
+  } else {
+    loop <- 1
+  }
+  
+  # Increment and save the loop counter
+  loop <- loop + 1
+  writeLines(as.character(loop), tracker_file)
+  
+  return(loop - 1)  # Return the current loop number (before increment)
+}
+
+update_tracker <- function(home_dir, tracker) {
+  # This function is now empty as get_loop handles the update
+}
+
+empty_plot <- function() {
+  plot(0, xaxt = 'n', yaxt = 'n', bty = 'n', pch = '', ylab = '', xlab = '', 
+       xlim = c(0,1), ylim = c(0,1), mar = c(0,0,0,0))
+}

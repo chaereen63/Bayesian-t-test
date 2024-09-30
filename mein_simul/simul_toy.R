@@ -1,11 +1,3 @@
-# Modified simulation.R
-
-# Set the computational node
-.libPaths(c(""))
-home_dir   <- "./mein_simul"
-output_dir <- file.path(home_dir,"./mein_results")
-start_dir  <- getwd()
-
 # Load required libraries
 library(rstan)
 library(RoBTT)
@@ -13,23 +5,27 @@ library(bain)
 library(BayesFactor)
 library(tidyverse)
 
+# Set the computational node
+.libPaths(c(""))
+home_dir   <- "."
+output_dir <- file.path(home_dir,"./mein_results")
+start_dir  <- getwd()
+
 # Load the functions and settings
 source(file = file.path(home_dir, "functions2.R"))
-settings <- readRDS(file = file.path(home_dir, "settings2.RDS"))
+settings_info <- readRDS(file = file.path(home_dir, "settings2.RDS"))
+settings <- settings_info  # Extract settings from the list
+
 tracker  <- "sim_loop"
 max_time <- 1.0  # Set maximum runtime in hours
 
+# Set global seed if specified
+if (all(settings_info$use_global_seed)) {
+  set.seed(settings_info$global_seed)
+}
 
 # Modified run_simulation function
-run_simulation <- function(current_settings, use_common_seed = TRUE) {
-  if (use_common_seed) {
-    set.seed(current_settings$seed)
-  } else {
-    current_seed <- sample.int(1e6, 1)
-    set.seed(current_seed)
-    current_settings$seed <- current_seed
-  }
-  
+run_simulation <- function(current_settings) {
   # Generate data using simulate_data function
   data <- simulate_data(
     mean1 = current_settings$mean1,
@@ -37,19 +33,19 @@ run_simulation <- function(current_settings, use_common_seed = TRUE) {
     sd1   = current_settings$sd1,
     sd2   = current_settings$sd2,
     n1    = current_settings$n1,
-    n2    = current_settings$n2
+    n2    = current_settings$n2,
+    rho   = current_settings$rho 
   )
   
   # 1. RoBTT
   fit_robtt <- RoBTT(
     x1 = data$x1,
     x2 = data$x2,
-    prior_d  = prior("cauchy", list(0, 1/sqrt(2))),
-    prior_r  = prior("beta",   list(1.5, 1.5)),
+    prior_delta = prior("cauchy", list(0, 1/sqrt(2))),
+    prior_rho  = prior("beta",   list(1.5, 1.5)),
     prior_nu = prior("exp",    list(1)),
-    likelihood = c("normal", "t"),
-    chains = 2, warmup = 500, iter = 2000,
-    parallel = FALSE, seed = current_settings$seed
+    chains = 2, warmup = 100, iter = 1000,
+    parallel = FALSE
   )
   
   # 2. Bain - Student t-test
@@ -73,18 +69,15 @@ run_simulation <- function(current_settings, use_common_seed = TRUE) {
     bain_student = fit_bain_student,
     bain_welch = fit_bain_welch,
     bayes_factor = fit_bf,
-    true_model = ifelse(current_settings$delta == 0, "H0", "H1"),
+    true_model = ifelse(current_settings$setting_delta == 0, "H0", "H1"),
     rho = current_settings$rho,
     sdr = current_settings$sdr,
-    delta = current_settings$delta,
-    scenario = current_settings$scenario,
-    seed_used = current_settings$seed
+    delta = current_settings$setting_delta,
+    scenario = current_settings$setting_scenario
   )
 }
-
 # Run simulations
 time_start <- Sys.time()
-use_common_seed <- TRUE  # Set to FALSE if you want different seeds for each simulation
 
 results <- list()
 while(difftime(Sys.time(), time_start, units = "hours") < max_time) {
@@ -97,10 +90,10 @@ while(difftime(Sys.time(), time_start, units = "hours") < max_time) {
   current_settings <- settings[loop, ]
   
   # Run simulation
-  result <- run_simulation(current_settings, use_common_seed)
+  result <- run_simulation(current_settings)
   
   # Save the results
-  saveRDS(result, file = file.path(output_dir, paste0("results_", current_settings$seed, ".RDS")))
+  saveRDS(result, file = file.path(output_dir, paste0("results_", loop, ".RDS")))
   
   # Store result in the results list
   results[[loop]] <- result
@@ -109,8 +102,7 @@ while(difftime(Sys.time(), time_start, units = "hours") < max_time) {
   update_tracker(home_dir, tracker)
 }
 
-# After simulations, you can add code here to collect and analyze the results
-# For example:
+# After simulations, collect and analyze the results
 collect_and_analyze_results <- function(results) {
   results_df <- map_dfr(results, ~data.frame(
     scenario = .x$scenario,
@@ -133,7 +125,7 @@ collect_and_analyze_results <- function(results) {
 results_df <- collect_and_analyze_results(results)
 
 # Example visualization
-ggplot(results_df, aes(x = sdr)) +
+ggplot(results_df, aes(x = rho)) +
   geom_point(aes(y = log(BF_robtt), color = "RoBTT"), alpha = 0.5) +
   geom_point(aes(y = log(BF_bain_student), color = "Bain Student"), alpha = 0.5) +
   geom_point(aes(y = log(BF_bain_welch), color = "Bain Welch"), alpha = 0.5) +

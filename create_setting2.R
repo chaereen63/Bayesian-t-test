@@ -1,6 +1,14 @@
 source("mein_simul/functions2.R")
 library(tidyverse)
 
+# 전체 시뮬레이션 seed 설정 옵션
+use_global_seed <- TRUE  # TRUE 또는 FALSE로 설정
+global_seed <- 603  # 원하는 숫자로 변경 가능
+
+if (use_global_seed) {
+  set.seed(global_seed)
+}
+
 # 시나리오 정의
 scenarios <- list(
   list(n1 = 60, n2 = 40, rho_params = c(2, 2)),    # rho 평균 약 0.5 (SDR ≈ 1)
@@ -21,8 +29,7 @@ create_settings <- function(scenario, delta, replications) {
     rho_alpha = scenarios[[scenario]]$rho_params[1],
     rho_beta = scenarios[[scenario]]$rho_params[2],
     setting_delta = delta,
-    replication = 1:replications,
-    seed = sample.int(1e6, replications)
+    replication = 1:replications
   )
 }
 
@@ -82,7 +89,15 @@ rho_stats <- settings %>%
   )
 
 print(rho_stats)
+
 # 결과 저장
+# 결과 저장 시 설정 정보도 함께 저장
+settings <- settings %>%
+  mutate(
+  use_global_seed = use_global_seed,
+  global_seed = global_seed
+)
+
 saveRDS(settings, file = "mein_simul/settings2.RDS")
 
 # 요약 통계 출력
@@ -115,4 +130,7 @@ ggplot(settings, aes(x = rho, fill = factor(setting_scenario))) +
        x = "rho", y = "Density", fill = "Scenario") +
   theme_minimal()
 
-ggsave("rho_distributions.png", width = 10, height = 8)
+# ggsave("rho_distributions.png", width = 10, height = 8)
+
+  # create_setting2에서 sdr계산이 수치적으로 rho값과 비선형적인 관계를 가지고 있음. 
+  # 나중에 필요할 경우 이 값을 어떻게 계산해서 사용할지 고려하기
