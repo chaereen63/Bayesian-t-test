@@ -19,11 +19,6 @@ settings <- settings_info  # Extract settings from the list
 tracker  <- "sim_loop"
 max_time <- 1.0  # Set maximum runtime in hours
 
-# Set global seed if specified
-if (all(settings_info$use_global_seed)) {
-  set.seed(settings_info$global_seed)
-}
-
 # Modified run_simulation function
 run_simulation <- function(current_settings) {
   # Generate data using simulate_data function
@@ -44,17 +39,17 @@ run_simulation <- function(current_settings) {
     prior_delta = prior("cauchy", list(0, 1/sqrt(2))),
     prior_rho  = prior("beta",   list(1.5, 1.5)),
     prior_nu = prior("exp",    list(1)),
-    chains = 2, warmup = 100, iter = 1000,
+    chains = 2, warmup = 100, iter = 500,              #iteration 줄여놨음
     parallel = FALSE
   )
   
   # 2. Bain - Student t-test
-  t_result_student <- t.test(data$x1, data$x2, var.equal = TRUE)
-  fit_bain_student <- bain(t_result_student, "x1 = x2")
+  t_result_student <- t_test(data$x1, data$x2, var.equal = TRUE)
+  fit_bain_student <- bain(t_result_student, "x = y")
   
   # 3. Bain - Welch t-test
-  t_result_welch <- t.test(data$x1, data$x2, var.equal = FALSE)
-  fit_bain_welch <- bain(t_result_welch, "x1 = x2")
+  t_result_welch <- t_test(data$x1, data$x2, var.equal = FALSE)
+  fit_bain_welch <- bain(t_result_welch, "x = y")
   
   # 4. BayesFactor
   fit_bf <- ttestBF(x = data$x1, y = data$x2)

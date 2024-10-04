@@ -54,7 +54,7 @@ get_RMSE <- function(estimate, true) {
 
 # Helper functions for simulation tracking and visualization
 
-get_loop <- function(dir, file) {
+get_loop <- function(dir, file, max_loop) {
   tracker_file <- file.path(dir, paste0(file, ".txt"))
   
   if (file.exists(tracker_file)) {
@@ -63,15 +63,18 @@ get_loop <- function(dir, file) {
     loop <- 1
   }
   
-  # Increment and save the loop counter
-  loop <- loop + 1
-  writeLines(as.character(loop), tracker_file)
+  # Ensure loop doesn't exceed max_loop
+  loop <- min(loop, max_loop)
   
-  return(loop - 1)  # Return the current loop number (before increment)
+  # Increment and save the loop counter
+  next_loop <- min(loop + 1, max_loop)
+  writeLines(as.character(next_loop), tracker_file)
+  
+  return(loop)
 }
 
 update_tracker <- function(home_dir, tracker) {
-  # This function is now empty as get_loop handles the update
+  # This function can remain empty
 }
 
 empty_plot <- function() {

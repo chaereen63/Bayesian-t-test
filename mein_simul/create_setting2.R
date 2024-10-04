@@ -1,5 +1,7 @@
-source("functions2.R")
+source("mein_simul/functions2.R")
 library(tidyverse)
+
+set.seed(1234)
 
 # 시나리오 정의
 scenarios <- list(
@@ -7,6 +9,14 @@ scenarios <- list(
   list(n1 = 50, n2 = 50, rho_params = c(16, 8)),     # rho 평균 약 0.67
   list(n1 = 40, n2 = 60, rho_params = c(16, 8)),     # rho 평균 약 0.67
   list(n1 = 40, n2 = 60, rho_params = c(5, 10))      # rho 평균 약 0.33
+)
+
+# 시나리오 정의2
+scenarios <- list(
+  list(n1 = 60, n2 = 40, rho_params = c(2, 2)),    # rho 평균 약 0.5 (SDR ≈ 1)
+  list(n1 = 50, n2 = 50, rho_params = c(8, 2)),     # rho 평균 약 0.2 (SDR ≈ 2)
+  list(n1 = 40, n2 = 60, rho_params = c(8, 2)),     # rho 평균 약 0.2 (SDR ≈ 2)
+  list(n1 = 40, n2 = 60, rho_params = c(2, 8))      # rho 평균 약 0.8 (SDR ≈ 0.5)
 )
 
 # 효과 크기 설정
@@ -71,7 +81,7 @@ all(abs(settings$rho - settings$rho_check) < 1e-10)
 all(abs(settings$delta - settings$delta_check) < 1e-10)
 
 # 결과 저장
-saveRDS(settings, file = "settings.RDS")
+saveRDS(settings, file = "mein_simul/settings_simple.RDS")
 
 # 요약 통계 출력
 summary_stats <- settings %>%
@@ -95,4 +105,4 @@ ggplot(settings, aes(x = rho, fill = factor(scenario))) +
        x = "rho", y = "Density", fill = "Scenario") +
   theme_minimal()
 
-ggsave("rho_distributions.png", width = 10, height = 8)
+# ggsave("rho_distributions.png", width = 10, height = 8)
