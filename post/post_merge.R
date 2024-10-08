@@ -1,9 +1,11 @@
+## For poster
+
 library(dplyr)
 library(purrr)
 
 ## practice for practice 결과 merging ##
 
-home_dir   <- "D:/just do it results"
+home_dir   <- "./post"
 output_dir <- "D:/just do it results"
 
 # 안전한 접근 함수 정의

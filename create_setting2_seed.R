@@ -10,12 +10,11 @@ if (use_global_seed) {
 }
 
 # 시나리오 정의
-  #replication =1로 설정하면서 표본크기 n_obs를 키움 ()
 scenarios <- list(
-  list(n1 = 400, n2 = 600, rho_params = c(2, 2)),    # rho 평균 약 0.5 (SDR ≈ 1)
-  list(n1 = 500, n2 = 500, rho_params = c(8, 2)),     # rho 평균 약 0.2 (SDR ≈ 2)
-  list(n1 = 400, n2 = 600, rho_params = c(8, 2)),     # rho 평균 약 0.2 (SDR ≈ 2)
-  list(n1 = 400, n2 = 600, rho_params = c(2, 8))      # rho 평균 약 0.8 (SDR ≈ 0.5)
+  list(n1 = 40, n2 = 60, rho_params = c(2, 2)),    # rho 평균 약 0.5 (SDR ≈ 1)
+  list(n1 = 50, n2 = 50, rho_params = c(8, 2)),     # rho 평균 약 0.2 (SDR ≈ 2)
+  list(n1 = 40, n2 = 60, rho_params = c(8, 2)),     # rho 평균 약 0.2 (SDR ≈ 2)
+  list(n1 = 40, n2 = 60, rho_params = c(2, 8))      # rho 평균 약 0.8 (SDR ≈ 0.5)
 )
 
 # 효과 크기 설정

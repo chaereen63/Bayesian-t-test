@@ -1,3 +1,4 @@
+#create setting2_seed 변수명에 대응되는 코드. 나중에 일반화 필요
 # Load required libraries
 library(rstan)
 library(RoBTT)
@@ -8,19 +9,19 @@ library(tidyverse)
 # set.seed(1234)
 
 # Set the computational node
-home_dir   <- "./mein_simul"
-output_dir <- file.path(home_dir,"./mein_results")
+home_dir   <- "."
+output_dir <- file.path("D:/just do it results") #caution!! 경로 임시로 수정
 start_dir  <- getwd()
 
 # Load the functions and settings
-source(file = file.path(home_dir, "functions2.R"))
-settings <- readRDS(file = file.path(home_dir, "settings2.RDS"))
+source(file = file.path(home_dir, "./mein_simul/functions2.R"))
+settings <- readRDS(file = file.path(home_dir, "/post/post_settings2.RDS"))
 
 print(head(settings))
 print(nrow(settings))
 
 tracker  <- "sim_loop"
-max_time <- 2.0  # Set maximum runtime in hours
+max_time <- 20.0  # Set maximum runtime in hours
 
 # Modified run_simulation function
 run_simulation <- function(current_settings) {
@@ -42,7 +43,7 @@ run_simulation <- function(current_settings) {
     prior_delta = prior("cauchy", list(0, 1/sqrt(2))),
     prior_rho  = prior("beta",   list(1.5, 1.5)),
     prior_nu = prior("exp",    list(1)),
-    chains = 2, warmup = 500, iter = 1000,
+    chains = 2, warmup = 1000, iter = 2000,
     parallel = FALSE
   )
   
@@ -85,9 +86,8 @@ print("Starting simulations...")
 results <- list()
 max_loop <- nrow(settings)
 
-while(difftime(Sys.time(), time_start, units = "hours") < max_time) {
-  loop <- get_loop(home_dir, tracker, max_loop)
-  if(loop > max_loop) break
+for (loop in 1:max_loop) {
+  if(difftime(Sys.time(), time_start, units = "hours") >= max_time) break
   
   print(paste("Processing loop:", loop))
   
@@ -96,18 +96,44 @@ while(difftime(Sys.time(), time_start, units = "hours") < max_time) {
   print(paste("Current settings:", toString(current_settings)))
   
   # Set the seed for this iteration
-  set.seed(current_settings$seed)
+  set.seed(current_settings$seed)               #seed가 setting에 저장되어 있는 경우인 create_settings2에 맞게 쓰여 있음. 나중에 state를 만들 경우 수정 필요
   
   # Run simulation
   print("Running simulation...")
-  result <- run_simulation(current_settings)
+  tryCatch({
+    result <- run_simulation(current_settings)
+    
+    # Save the results for each iteration
+    result_file <- file.path(output_dir, paste0("results_", loop, ".RDS"))
+    saveRDS(result, file = result_file)
+    
+    if(file.exists(result_file)) {
+      print(paste("Results saved successfully for loop:", loop))
+    } else {
+      print(paste("Failed to save results for loop:", loop))
+    }
+    
+    # Store result in the results list
+    results[[loop]] <- result
+    
+    # Update the tracker
+    update_tracker(home_dir, tracker)
+    
+    # Periodically save accumulated results
+    if(loop %% 10 == 0 || loop == max_loop) {
+      accumulated_file <- file.path(output_dir, paste0("accumulated_results_", loop, ".RDS"))
+      saveRDS(results, file = accumulated_file)
+      print(paste("Accumulated results saved at loop:", loop))
+    }
+    
+  }, error = function(e) {
+    print(paste("Error in simulation for loop:", loop, "- Error:", e$message))
+    # Optionally, you can still save the error information
+    saveRDS(list(error = e$message), file = file.path(output_dir, paste0("error_", loop, ".RDS")))
+  })
   
-  # Save the results
-  print(paste("Saving results for loop:", loop))
-  saveRDS(result, file = file.path(output_dir, paste0("results_", loop, ".RDS")))
-  
-  # Store result in the results list
-  results[[loop]] <- result
+  # Use get_loop to update the loop counter in the tracker file
+  get_loop(home_dir, tracker, max_loop)
 }
 
 print("Simulations completed.")
