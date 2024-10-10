@@ -1,15 +1,15 @@
 source("mein_simul/functions2.R")
 library(tidyverse)
 
-set.seed(1234)
+# set.seed(1234)
 
 # 시나리오 정의
-scenarios <- list(
-  list(n1 = 60, n2 = 40, rho_params = c(10, 10)),    # rho 평균 약 0.5
-  list(n1 = 50, n2 = 50, rho_params = c(16, 8)),     # rho 평균 약 0.67
-  list(n1 = 40, n2 = 60, rho_params = c(16, 8)),     # rho 평균 약 0.67
-  list(n1 = 40, n2 = 60, rho_params = c(5, 10))      # rho 평균 약 0.33
-)
+# scenarios <- list(
+#   list(n1 = 60, n2 = 40, rho_params = c(10, 10)),    # rho 평균 약 0.5
+#   list(n1 = 50, n2 = 50, rho_params = c(16, 8)),     # rho 평균 약 0.67
+#   list(n1 = 40, n2 = 60, rho_params = c(16, 8)),     # rho 평균 약 0.67
+#   list(n1 = 40, n2 = 60, rho_params = c(5, 10))      # rho 평균 약 0.33
+# )
 
 # 시나리오 정의2
 scenarios <- list(
@@ -20,7 +20,7 @@ scenarios <- list(
 )
 
 # 효과 크기 설정
-deltas <- c(0, 0.5)
+deltas <- c(0, 0.3, 0.5, 0.8)
 
 # 설정 생성 함수
 create_settings <- function(scenario, delta, replications) {
@@ -32,7 +32,7 @@ create_settings <- function(scenario, delta, replications) {
     rho_beta = scenarios[[scenario]]$rho_params[2],
     delta = delta,
     replication = 1:replications,
-    seed = sample.int(1e6, replications)
+    seed = sample.int(.Machine$integer.max, replications)
   )
 }
 

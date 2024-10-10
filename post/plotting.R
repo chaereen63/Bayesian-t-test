@@ -2,9 +2,10 @@
 ## analysis script 참고해서 새로 작성 (2024-10-07)
 
 library(ggplot2)
+library(ggridges)
 library(dplyr)
 library(tidyr)
-library(patchwork)  # 그래프를 쉽게 결합할 수 있는 패키지입니다.
+
 
 # 데이터 로드
 results_df <- readRDS("./post/final_merged_results.RDS")
@@ -16,6 +17,58 @@ results_df %>%
   mutate(BF_bain_student = (BF_bain_student)^(-1), BF_bain_welch = (BF_bain_welch)^(-1)) ->
   result_inv
 
+# 1. 생성된 BF 분포 그리기
+# 데이터 변환
+result_long <- result_inv %>%
+  pivot_longer(
+    cols = starts_with("BF_"),
+    names_to = "model",
+    values_to = "BF"
+  ) %>%
+  mutate(
+    model = gsub("BF_", "", model),  # str_remove 대신 gsub 사용
+    log_BF = log10(BF)  # log10 변환 추가
+  )
+
+# 시각화 - Ridgeline plot
+library(tidyverse)
+
+ggplot(result_long, aes(x = log_BF, y = factor(scenario), fill = model)) +
+  geom_density_ridges(
+    alpha = 0.6, 
+    scale = 0.9, 
+    quantile_lines = TRUE, 
+    quantiles = 2
+  ) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red", size = 0.5) + #log BF = 0, BF=1인 지점
+  facet_wrap(~ true_model, scales = "free") +  # scales = "free" 추가
+  theme_minimal() +
+  labs(
+    title = "Distribution of log10(Bayes Factors) by Scenario, Model, and True Hypothesis",
+    subtitle = "Scales are different for H0 and H1",
+    x = "log10(Bayes Factor)",
+    y = "Scenario",
+    fill = "Model"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme(legend.position = "bottom")
+
+# 시각화 - Boxplot
+ggplot(result_long, aes(x = factor(scenario), y = log_BF, fill = model)) +
+  geom_boxplot(position = position_dodge(width = 0.9), outlier.alpha = 0.3) +
+  facet_wrap(~ true_model, scales = "free_y") +
+  theme_minimal() +
+  labs(
+    title = "Distribution of log10(Bayes Factors) by Scenario, Model, and True Hypothesis",
+    x = "Scenario",
+    y = "log10(Bayes Factor)",
+    fill = "Model"
+  ) +
+  scale_fill_brewer(palette = "Set2") +
+  theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+# 2. 막대그래프 그리기
 # 데이터 가공 및 로그 변환된 BF 계산
 plot_data <- result_inv %>%
   mutate(across(starts_with("BF_"), ~log10(.))) %>%
@@ -47,6 +100,8 @@ scenario_labels <- result_inv %>%
             n2 = ifelse(first(scenario) %in% c(1,3,4), 60, 50)) %>%
   mutate(label = sprintf("n1=%d, n2=%d, SDR=%.2f", n1, n2, sdr)) %>%
   pull(label)
+
+library(ggridges)
 
 # 일관된 색상 팔레트 정의
 method_colors <- c(
@@ -205,12 +260,6 @@ ggplot(plot_data, aes(x = method, y = mean_log_BF, fill = method)) +
   labs(title = "Comparison of Mean log10(Bayes Factors)",
        x = "Method", y = "Mean log10(Bayes Factor)")
 
-
-## 추가 분석을 위한 R 코드 (2024-10-08)
-
-library(ggplot2)
-library(dplyr)
-library(tidyr)
 
 # 1. SDR과 방법론의 상호작용 효과 시각화 (H1 상황)
 interaction_plot <- anova_data %>%
