@@ -1,0 +1,137 @@
+# Load required libraries
+library(rstan)
+library(RoBTT)
+library(bain)
+library(BayesFactor)
+library(tidyverse)
+
+# Set the computational node
+.libPaths(c(""))
+home_dir   <- "./mein_simul"
+output_dir <- file.path(home_dir,"./mein_results")
+start_dir  <- getwd()
+
+# Load the functions and settings
+source(file = file.path(home_dir, "functions2.R"))
+settings_info <- readRDS(file = file.path(home_dir, "settings2.RDS"))
+settings <- settings_info  # Extract settings from the list
+
+tracker  <- "sim_loop"
+max_time <- 1.0  # Set maximum runtime in hours
+
+# Modified run_simulation function
+run_simulation <- function(current_settings) {
+  # Generate data using simulate_data function
+  data <- simulate_data(
+    mean1 = current_settings$mean1,
+    mean2 = current_settings$mean2,
+    sd1   = current_settings$sd1,
+    sd2   = current_settings$sd2,
+    n1    = current_settings$n1,
+    n2    = current_settings$n2,
+    rho   = current_settings$rho 
+  )
+  
+  # 1. RoBTT
+  fit_robtt <- RoBTT(
+    x1 = data$x1,
+    x2 = data$x2,
+    prior_delta = prior("cauchy", list(0, 1/sqrt(2))),
+    prior_rho  = prior("beta",   list(1.5, 1.5)),
+    prior_nu = prior("exp",    list(1)),
+    chains = 2, warmup = 100, iter = 1000,
+    parallel = FALSE
+  )
+  
+  # 2. Bain - Student t-test
+  t_result_student <- t_test(data$x1, data$x2, var.equal = TRUE)
+  fit_bain_student <- bain(t_result_student, "x = y")
+  
+  # 3. Bain - Welch t-test
+  t_result_welch <- t_test(data$x1, data$x2, var.equal = FALSE)
+  fit_bain_welch <- bain(t_result_welch, "x = y")
+  
+  # 4. BayesFactor
+  fit_bf <- ttestBF(x = data$x1, y = data$x2)
+  
+  # Collect results
+  list(
+    robtt = list(
+      fit_summary = summary(fit_robtt, conditional = TRUE),
+      diagnostics = summary(fit_robtt, diagnostics = TRUE),
+      individual_models = summary(fit_robtt, type = "individual")
+    ),
+    bain_student = fit_bain_student,
+    bain_welch = fit_bain_welch,
+    bayes_factor = fit_bf,
+    true_model = ifelse(current_settings$setting_delta == 0, "H0", "H1"),
+    rho = current_settings$rho,
+    sdr = current_settings$sdr,
+    delta = current_settings$setting_delta,
+    scenario = current_settings$setting_scenario
+  )
+}
+# Run simulations
+time_start <- Sys.time()
+
+results <- list()
+while(difftime(Sys.time(), time_start, units = "hours") < max_time) {
+  # Get the current setting to compute
+  loop <- get_loop(home_dir, tracker)
+  if(loop > nrow(settings))
+    break
+  
+  # Extract parameters for the current iteration
+  current_settings <- settings[loop, ]
+  
+  # Run simulation
+  result <- run_simulation(current_settings)
+  
+  # Save the results
+  saveRDS(result, file = file.path(output_dir, paste0("results_", loop, ".RDS")))
+  
+  # Store result in the results list
+  results[[loop]] <- result
+  
+  # Update the tracker
+  update_tracker(home_dir, tracker)
+}
+
+# After simulations, collect and analyze the results
+collect_and_analyze_results <- function(results) {
+  results_df <- map_dfr(results, ~data.frame(
+    scenario = .x$scenario,
+    delta = .x$delta,
+    rho = .x$rho,
+    sdr = .x$sdr,
+    true_model = .x$true_model,
+    BF_robtt = .x$robtt$fit_summary$BF10,
+    BF_bain_student = .x$bain_student$fit$BF[1, "bf"],
+    BF_bain_welch = .x$bain_welch$fit$BF[1, "bf"],
+    BF_bf = exp(.x$bayes_factor@bayesFactor$bf),
+    seed_used = .x$seed_used,
+    stringsAsFactors = FALSE
+  ))
+  
+  return(results_df)
+}
+
+# Analyze results
+results_df <- collect_and_analyze_results(results)
+
+# Example visualization
+ggplot(results_df, aes(x = rho)) +
+  geom_point(aes(y = log(BF_robtt), color = "RoBTT"), alpha = 0.5) +
+  geom_point(aes(y = log(BF_bain_student), color = "Bain Student"), alpha = 0.5) +
+  geom_point(aes(y = log(BF_bain_welch), color = "Bain Welch"), alpha = 0.5) +
+  geom_point(aes(y = log(BF_bf), color = "BayesFactor"), alpha = 0.5) +
+  geom_smooth(aes(y = log(BF_robtt), color = "RoBTT"), method = "loess") +
+  geom_smooth(aes(y = log(BF_bain_student), color = "Bain Student"), method = "loess") +
+  geom_smooth(aes(y = log(BF_bain_welch), color = "Bain Welch"), method = "loess") +
+  geom_smooth(aes(y = log(BF_bf), color = "BayesFactor"), method = "loess") +
+  facet_grid(delta ~ scenario) +
+  labs(title = "Log Bayes Factor vs SDR",
+       x = "SDR", y = "Log Bayes Factor", color = "Method") +
+  theme_minimal()
+
+ggsave("BF_comparison.png", width = 12, height = 8)

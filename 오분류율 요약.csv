@@ -1,0 +1,17 @@
+"","model","true_model","classification","mean_rate","median_rate","sd_rate","min_rate","max_rate"
+"1","bain_student","H0","Inconclusive",0.1175,0.1175,0.0153731367434669,0.099,0.136
+"2","bain_student","H0","Misclassified",0.01025,0.0095,0.00464578662158878,0.006,0.016
+"3","bain_student","H1","Inconclusive",0.083,0.0865,0.0142126704035519,0.063,0.096
+"4","bain_student","H1","Misclassified",0.00875,0.009,0.00556027577253743,0.002,0.015
+"5","bain_welch","H0","Inconclusive",0.118,0.119,0.00778888096369861,0.109,0.125
+"6","bain_welch","H0","Misclassified",0.0095,0.01,0.00264575131106459,0.006,0.012
+"7","bain_welch","H1","Inconclusive",0.084,0.074,0.0285773803324704,0.063,0.125
+"8","bain_welch","H1","Misclassified",0.00975,0.0105,0.0064485140407177,0.002,0.016
+"9","bayesfactor","H0","Inconclusive",0.3125,0.32,0.0381794010778936,0.26,0.35
+"10","bayesfactor","H0","Misclassified",0.0145,0.012,0.00645497224367903,0.01,0.024
+"11","bayesfactor","H1","Inconclusive",0.06475,0.0685,0.0107819293264239,0.049,0.073
+"12","bayesfactor","H1","Misclassified",0.00266666666666667,0.003,0.00152752523165195,0.001,0.004
+"13","robtt_effect","H0","Inconclusive",0.30825,0.3175,0.0425313609783024,0.249,0.349
+"14","robtt_effect","H0","Misclassified",0.0145,0.015,0.00264575131106459,0.011,0.017
+"15","robtt_effect","H1","Inconclusive",0.0695,0.0625,0.0200416233540766,0.055,0.098
+"16","robtt_effect","H1","Misclassified",0.0025,0.002,0.00191485421551268,0.001,0.005

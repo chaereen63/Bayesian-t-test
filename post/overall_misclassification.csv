@@ -1,0 +1,5 @@
+"","model","mean_misclassification","median_misclassification","sd_misclassification","min_misclassification","max_misclassification"
+"1","bain_student",0.10975,0.106,0.0252402739401027,0.07,0.152
+"2","bain_welch",0.110625,0.122,0.0290661192062904,0.068,0.141
+"3","bayesfactor",0.196875,0.172,0.142067828367801,0.05,0.374
+"4","robtt_effect",0.197375,0.182,0.137677612559196,0.056,0.366
