@@ -3,8 +3,8 @@ library(purrr)
 
 ## practice for practice 결과 merging ##
 
-home_dir   <- "D:/just do it results"
-output_dir <- "D:/just do it results"
+home_dir   <- "./mein_simul"
+output_dir <- "./mein_simul/mein_results"
 
 # 안전한 접근 함수 정의
 safe_extract <- function(x, default = NA) {
@@ -65,7 +65,7 @@ results <- map(files, ~{
 results_df <- bind_rows(results)
 
 rownames(results_df) <- NULL
-saveRDS(results_df, file = file.path(home_dir, "final_merged_results.RDS"))
+saveRDS(results_df, file = file.path(home_dir, "merged_results.RDS"))
 
 # 결과 확인
 print(str(results_df))

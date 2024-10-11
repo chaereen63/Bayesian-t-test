@@ -42,21 +42,21 @@ settings <- crossing(
   delta = deltas
 ) %>%
   mutate(
-    settings = map2(scenario, delta, ~create_settings(.x, .y, replications = 100)) #pilot으로 replications를 줄임
+    settings = map2(scenario, delta, ~create_settings(.x, .y, replications = 1000)) #pilot으로 replications를 줄임
   ) %>%
   select(-delta,-scenario) %>%  # crossing에서 생성된 delta 열 제거
   unnest(settings)
 
 # rho 샘플링 및 표준편차 계산
+grand_sd <- 1  # 전체 표준편차 설정
+
 settings <- settings %>%
   rowwise() %>%
   mutate(
     rho = rbeta(1, shape1 = rho_alpha, shape2 = rho_beta),
-    var1 = 1 / rho,
-    var2 = 1 / (1 - rho),
-    sd1 = sqrt(var1),
-    sd2 = sqrt(var2),
-    sdr = sd2 / sd1
+    sd1 = grand_sd * sqrt(2 / (1 + sqrt(rho / (1 - rho)))),
+    sd2 = grand_sd * sqrt(2 / (1 + sqrt((1 - rho) / rho))),
+    sdr = ((1-rho)/rho)^(1/2)
   ) %>%
   ungroup()
 
@@ -72,16 +72,24 @@ settings <- settings %>%
 # 검증
 settings <- settings %>%
   mutate(
-    rho_check = 1 / var1 / (1 / var1 + 1 / var2),
+    rho_check = (1/sd1^2) / (1/sd1^2 + 1/sd2^2),
     delta_check = cohens_d(mean1, mean2, sd1, sd2, n1, n2)
   )
+
+summary_stats %>%  mutate( rho_check= 1 / (1 + mean_sdr^2)) -> check
+all(abs(check$mean_rho - check$rho_check) < 1e-6)  # 허용 오차를 조금 더 크게 설정
 
 # 검증 결과 확인
 all(abs(settings$rho - settings$rho_check) < 1e-10)
 all(abs(settings$delta - settings$delta_check) < 1e-10)
 
+check %>%
+  mutate(rho_check = 1 / (1 + mean_sdr^2),
+         diff = abs(mean_rho - rho_check)) %>%
+  select(scenario, delta, mean_rho, mean_sdr, rho_check, diff)
+
 # 결과 저장
-saveRDS(settings, file = "mein_simul/settings_simple.RDS")
+saveRDS(settings, file = "mein_simul/settings_delta.RDS")
 
 # 요약 통계 출력
 summary_stats <- settings %>%
