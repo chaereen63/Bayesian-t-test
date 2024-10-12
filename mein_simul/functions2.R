@@ -83,6 +83,10 @@ empty_plot <- function() {
 }
 
 # Compile Stan model once
+library(stats)
+library(dplyr)
+library(rstan)
+
 stan_model <- stan_model(model_code = "
 data {
   int<lower=0> N1;
@@ -113,10 +117,10 @@ model {
 }
 ")
 
-# Wetzels' MCMC t-test function
-wetzels_ttest <- function(y1, y2, iter = 5000, chains = 4) {
+# Renamed and slightly modified Wetzels' MCMC t-test function
+wetzels_ttest <- function(y1, y2, iter = 5000, chains = 2, warmup = 1000) {
   data_list <- list(N1 = length(y1), N2 = length(y2), y1 = y1, y2 = y2)
-  fit <- sampling(stan_model, data = data_list, iter = iter, chains = chains)
+  fit <- sampling(stan_model, data = data_list, iter = iter, chains = chains, warmup = warmup)
   
   # Extract posterior samples
   posterior_samples <- extract(fit)$delta
@@ -136,6 +140,7 @@ wetzels_ttest <- function(y1, y2, iter = 5000, chains = 4) {
   return(list(
     fit = fit,
     BF10 = BF10,
-    posterior_samples = posterior_samples
+    posterior_samples = posterior_samples,
+    summary = summary(fit)
   ))
 }

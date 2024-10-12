@@ -21,7 +21,7 @@ print(head(settings))
 print(nrow(settings))
 
 tracker  <- "sim_loop"
-max_time <- 20.0  # Set maximum runtime in hours
+max_time <- 24.0  # Set maximum runtime in hours
 
 # Modified run_simulation function
 run_simulation <- function(current_settings) {
@@ -43,7 +43,7 @@ run_simulation <- function(current_settings) {
     prior_delta = prior("cauchy", list(0, 1/sqrt(2))),
     prior_rho  = prior("beta",   list(1.5, 1.5)),
     prior_nu = prior("exp",    list(1)),
-    chains = 2, warmup = 1000, iter = 2000,
+    chains = 2, warmup = 1000, iter = 5000,
     parallel = FALSE
   )
   
@@ -60,6 +60,9 @@ run_simulation <- function(current_settings) {
   # 4. BayesFactor
   fit_bf <- ttestBF(x = data$x1, y = data$x2)
   
+  # 5. Wetzels' MCMC t-test
+  fit_wetzels <- wetzels_ttest(data$x1, data$x2)
+  
   # Collect results
   results <- list(
     robtt = list(
@@ -69,6 +72,7 @@ run_simulation <- function(current_settings) {
     bain_student = fit_bain_student,
     bain_welch = fit_bain_welch,
     bayes_factor = fit_bf,
+    wetzels = fit_wetzels,
     true_model = ifelse(current_settings$delta == 0, "H0", "H1"),
     rho = current_settings$rho,
     sdr = current_settings$sdr,
