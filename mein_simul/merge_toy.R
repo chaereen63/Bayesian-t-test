@@ -39,6 +39,16 @@ extract_robtt_effect <- function(robtt_result) {
   }, error = function(e) NA)
 }
 
+# Wetzels의 MCMC t-test BF10을 추출하는 함수
+extract_wetzels_bf <- function(wetzels_result) {
+  tryCatch({
+    if (is.null(wetzels_result) || is.null(wetzels_result$BF10)) {
+      return(NA)
+    }
+    return(as.numeric(wetzels_result$BF10))
+  }, error = function(e) NA)
+}
+
 # 단일 결과를 처리하는 함수
 process_result <- function(temp_result) {
   list(
@@ -46,6 +56,7 @@ process_result <- function(temp_result) {
     BF_bain_student = safe_extract(temp_result$bain_student$fit$BF.c[1]),
     BF_bain_welch = safe_extract(temp_result$bain_welch$fit$BF.c[1]),
     BF_bayesfactor = extract_bayes_factor(temp_result$bayes_factor),
+    BF_wetzels = extract_wetzels_bf(temp_result$wetzels),
     true_model = safe_extract(temp_result$true_model),
     rho = safe_extract(temp_result$rho),
     sdr = safe_extract(temp_result$sdr),

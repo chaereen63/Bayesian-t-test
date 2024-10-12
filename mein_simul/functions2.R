@@ -83,10 +83,6 @@ empty_plot <- function() {
 }
 
 # Compile Stan model once
-library(stats)
-library(dplyr)
-library(rstan)
-
 stan_model <- stan_model(model_code = "
 data {
   int<lower=0> N1;

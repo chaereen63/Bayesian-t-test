@@ -10,7 +10,7 @@ scenarios <- list(
 )
 
 # 효과 크기 설정
-deltas <- c(0, 0.8) #효과크기 좀 더 크게 변경 
+deltas <- c(0, 0.3, 0.5, 0.8) #효과크기 좀 더 크게 변경 
 
 # 설정 생성 함수
 create_settings <- function(scenario, delta, replications) {
@@ -84,7 +84,7 @@ sdr_stats <- settings %>%
 print(sdr_stats)
 
 # 결과 저장
-saveRDS(settings, file = "post/post_settings2.RDS")
+saveRDS(settings, file = "post/post_settings3.RDS")
 
 # 요약 통계 출력
 summary_stats <- settings %>%
