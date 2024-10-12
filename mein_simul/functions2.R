@@ -81,3 +81,61 @@ empty_plot <- function() {
   plot(0, xaxt = 'n', yaxt = 'n', bty = 'n', pch = '', ylab = '', xlab = '', 
        xlim = c(0,1), ylim = c(0,1), mar = c(0,0,0,0))
 }
+
+# Compile Stan model once
+stan_model <- stan_model(model_code = "
+data {
+  int<lower=0> N1;
+  int<lower=0> N2;
+  vector[N1] y1;
+  vector[N2] y2;
+}
+parameters {
+  real mu;
+  real<lower=0> sigma1;
+  real<lower=0> sigma2;
+  real delta;
+}
+transformed parameters {
+  real<lower=0> pooled_sigma;
+  real alpha;
+  pooled_sigma = sqrt((sigma1^2 * (N1 - 1) + sigma2^2 * (N2 - 1)) / (N1 + N2 - 2));
+  alpha = delta * pooled_sigma;
+}
+model {
+  mu ~ cauchy(0, 1);
+  sigma1 ~ cauchy(0, 1);
+  sigma2 ~ cauchy(0, 1);
+  delta ~ cauchy(0, 1);
+  
+  y1 ~ normal(mu - alpha/2, sigma1);
+  y2 ~ normal(mu + alpha/2, sigma2);
+}
+")
+
+# Wetzels' MCMC t-test function
+wetzels_ttest <- function(y1, y2, iter = 5000, chains = 4) {
+  data_list <- list(N1 = length(y1), N2 = length(y2), y1 = y1, y2 = y2)
+  fit <- sampling(stan_model, data = data_list, iter = iter, chains = chains)
+  
+  # Extract posterior samples
+  posterior_samples <- extract(fit)$delta
+  
+  # Estimate posterior density
+  posterior_density <- density(posterior_samples)
+  
+  # Estimate posterior density at δ = 0
+  posterior_at_zero <- approx(posterior_density$x, posterior_density$y, xout = 0)$y
+  
+  # Prior density at δ = 0 (Cauchy(0, 1))
+  prior_at_zero <- dcauchy(0, 0, 1)
+  
+  # Calculate Bayes Factor (BF10)
+  BF10 <- prior_at_zero / posterior_at_zero
+  
+  return(list(
+    fit = fit,
+    BF10 = BF10,
+    posterior_samples = posterior_samples
+  ))
+}
