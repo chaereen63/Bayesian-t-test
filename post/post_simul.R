@@ -10,12 +10,12 @@ library(tidyverse)
 
 # Set the computational node
 home_dir   <- "."
-output_dir <- file.path("D:/just do it results") #caution!! 경로 임시로 수정
+output_dir <- file.path("D:/post_results") #caution!! 경로 임시로 수정
 start_dir  <- getwd()
 
 # Load the functions and settings
 source(file = file.path(home_dir, "./mein_simul/functions2.R"))
-settings <- readRDS(file = file.path(home_dir, "/post/post_settings2.RDS"))
+settings <- readRDS(file = file.path(home_dir, "/post/post_settings3.RDS")) #2 -> 3(more scenario)
 
 print(head(settings))
 print(nrow(settings))
@@ -90,7 +90,25 @@ print("Starting simulations...")
 results <- list()
 max_loop <- nrow(settings)
 
-for (loop in 1:max_loop) {
+# 기존 결과 파일에서 가장 최근의 체크포인트 생성
+create_checkpoint_from_results <- function(output_dir) {
+  result_files <- list.files(output_dir, pattern = "^results_\\d+\\.RDS$", full.names = TRUE)
+  if (length(result_files) == 0) {
+    print("No result files found.")
+    return(1)  # 결과 파일이 없으면 1부터 시작
+  }
+  file_numbers <- as.numeric(gsub(".*results_(\\d+)\\.RDS", "\\1", result_files))
+  last_number <- max(file_numbers)
+  print(paste("Last completed simulation:", last_number))
+  return(last_number + 1)  # 다음 번호부터 시작
+}
+
+# 시뮬레이션 시작 전 처리
+start_loop <- create_checkpoint_from_results(output_dir)
+print(paste("Starting simulation from loop:", start_loop))
+
+# 기존 시뮬레이션 루프 수정
+for (loop in start_loop:max_loop) {
   if(difftime(Sys.time(), time_start, units = "hours") >= max_time) break
   
   print(paste("Processing loop:", loop))
@@ -117,18 +135,9 @@ for (loop in 1:max_loop) {
       print(paste("Failed to save results for loop:", loop))
     }
     
-    # Store result in the results list
-    results[[loop]] <- result
-    
     # Update the tracker
     update_tracker(home_dir, tracker)
     
-    # Periodically save accumulated results
-    if(loop %% 10 == 0 || loop == max_loop) {
-      accumulated_file <- file.path(output_dir, paste0("accumulated_results_", loop, ".RDS"))
-      saveRDS(results, file = accumulated_file)
-      print(paste("Accumulated results saved at loop:", loop))
-    }
     
   }, error = function(e) {
     print(paste("Error in simulation for loop:", loop, "- Error:", e$message))
@@ -139,5 +148,8 @@ for (loop in 1:max_loop) {
   # Use get_loop to update the loop counter in the tracker file
   get_loop(home_dir, tracker, max_loop)
 }
+
+end_time <- Sys.time()
+print(paste("Total execution time:", difftime(end_time, time_start, units = "hours"), "hours"))
 
 print("Simulations completed.")

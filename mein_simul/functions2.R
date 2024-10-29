@@ -119,7 +119,7 @@ wetzels_ttest <- function(y1, y2, iter = 5000, chains = 2, warmup = 1000) {
   fit <- sampling(stan_model, data = data_list, iter = iter, chains = chains, warmup = warmup)
   
   # Extract posterior samples
-  posterior_samples <- extract(fit)$delta
+  posterior_samples <- rstan::extract(fit)$delta
   
   # Estimate posterior density
   posterior_density <- density(posterior_samples)

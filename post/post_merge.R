@@ -6,7 +6,7 @@ library(purrr)
 ## practice for practice 결과 merging ##
 
 home_dir   <- "./post"
-output_dir <- "D:/just do it results"
+output_dir <- "D:/post_results2"
 
 # 안전한 접근 함수 정의
 safe_extract <- function(x, default = NA) {
