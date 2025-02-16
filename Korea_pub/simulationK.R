@@ -10,18 +10,18 @@ library(tidyverse)
 
 # Set the computational node
 home_dir   <- "."
-output_dir <- file.path("D:/post_results") #USB 경로로 수정하기
+output_dir <- file.path("D:/resultsK") #USB 경로로 수정하기
 start_dir  <- getwd()
 
 # Load the functions and settings
 source(file = file.path(home_dir, "./Korea_pub/functionsK.R"))
-settings <- readRDS(file = file.path(home_dir, "/Korea_pub/settings.RDS"))
+settings <- readRDS(file = file.path(home_dir, "/Korea_pub/settingsK.RDS"))
 
 print(head(settings))
 print(nrow(settings))
 
 tracker  <- "sim_loop"
-max_time <- 24.0  # Set maximum runtime in hours
+max_time <- 48.0  # Set maximum runtime in hours
 
 # Modified run_simulation function
 run_simulation <- function(current_settings) {
@@ -42,38 +42,27 @@ run_simulation <- function(current_settings) {
     x2 = data$x2,
     prior_delta = prior("cauchy", list(0, 1/sqrt(2))),
     prior_rho  = prior("beta",   list(1.5, 1.5)),
-    prior_nu = prior("exp",    list(1)),
     chains = 2, warmup = 1000, iter = 5000,
     parallel = FALSE
   )
+  fit_robtt_ind = summary(fit_robtt, type = "individual")
   
-  robtt_summary <- summary(fit_robtt, conditional = TRUE)
-  
-  # 2. Bain - Student t-test
-  t_result_student <- t_test(data$x1, data$x2, var.equal = TRUE)
-  fit_bain_student <- bain(t_result_student, "x = y")
-  
-  # 3. Bain - Welch t-test
-  t_result_welch <- t_test(data$x1, data$x2, var.equal = FALSE)
-  fit_bain_welch <- bain(t_result_welch, "x = y")
-  
-  # 4. BayesFactor
+  # 2. BayesFactor_JZS
   fit_bf <- ttestBF(x = data$x1, y = data$x2)
   
-  # 5. Wetzels' MCMC t-test
-  fit_wetzels <- wetzels_ttest(data$x1, data$x2)
+  # 3. Giron & Del Castillo
+  fit_gica <- gicaBF(x1 = data$x1, x2 = data$x2)
   
-  # Collect results
+  #collect result
   results <- list(
     robtt = list(
-      fit_summary = summary(fit_robtt, diagnostics = TRUE),
-      individual_models = summary(fit_robtt, type = "individual")
+      bf_effect = list(
+        homoBF = as.numeric(fit_robtt_ind$models[[5]]$summary[4,2]) / as.numeric(fit_robtt_ind$models[[1]]$summary[4,2]),
+        heteBF = as.numeric(fit_robtt_ind$models[[7]]$summary[4,2]) / as.numeric(fit_robtt_ind$models[[3]]$summary[4,2])
+      )
     ),
-    bain_student = fit_bain_student,
-    bain_welch = fit_bain_welch,
-    bayes_factor = fit_bf,
-    wetzels = fit_wetzels,
-    true_model = ifelse(current_settings$delta == 0, "H0", "H1"),
+    bayes_factor = fit_bf,  # 전체 결과 저장
+    gica = fit_gica,  # 전체 결과 저장
     rho = current_settings$rho,
     sdr = current_settings$sdr,
     delta = current_settings$delta,

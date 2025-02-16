@@ -1,4 +1,4 @@
-source("mein_simul/functions2.R")
+source("Korea_pub/functionsK.R")
 library(tidyverse)
 
 # 시나리오 정의 (rho 값을 고정)
@@ -31,7 +31,7 @@ settings <- crossing(
   delta = deltas
 ) %>%
   mutate(
-    settings = map2(scenario, delta, ~create_settings(.x, .y, replications = 500))
+    settings = map2(scenario, delta, ~create_settings(.x, .y, replications = 500)) #replication 필요하면 수정하기
   ) %>%
   select(-scenario, -delta) %>%  # 원래의 scenario와 delta 열 제거
   unnest(settings)

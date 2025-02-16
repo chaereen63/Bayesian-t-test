@@ -82,35 +82,59 @@ empty_plot <- function() {
        xlim = c(0,1), ylim = c(0,1), mar = c(0,0,0,0))
 }
 
-# Compile Stan model once
-stan_model <- stan_model(model_code = "
-data {
-  int<lower=0> N1;
-  int<lower=0> N2;
-  vector[N1] y1;
-  vector[N2] y2;
-}
-parameters {
-  real mu;
-  real<lower=0> sigma1;
-  real<lower=0> sigma2;
-  real delta;
-}
-transformed parameters {
-  real<lower=0> pooled_sigma;
-  real alpha;
-  pooled_sigma = sqrt((sigma1^2 * (N1 - 1) + sigma2^2 * (N2 - 1)) / (N1 + N2 - 2));
-  alpha = delta * pooled_sigma;
-}
-model {
-  mu ~ cauchy(0, 1);
-  sigma1 ~ cauchy(0, 1);
-  sigma2 ~ cauchy(0, 1);
-  delta ~ cauchy(0, 1);
-  
-  y1 ~ normal(mu - alpha/2, sigma1);
-  y2 ~ normal(mu + alpha/2, sigma2);
-}
-")
-
 # Giron and Castillo (2022)
+library(pracma)
+
+gicaBF <- function(x1, x2) {
+  
+  # Calculate sample statistics
+  xbar1 <- mean(x1)
+  xbar2 <- mean(x2)
+  var1 <- var(x1)
+  var2 <- var(x2)
+  n1 <- length(x1)
+  n2 <- length(x2)
+  
+  # Calculate degrees of freedom
+  df1 <- n1 - 1
+  df2 <- n2 - 1
+  
+  # Location parameter
+  d <- xbar2 - xbar1
+  
+  # Define the numerator integrand
+  num_integrand <- function(delta) {
+    term1 <- (1 + n1 * delta^2/(df1 * var1))^(-n1/2)
+    term2 <- (1 + n2 * ((delta-d)^2)/(df2 * var2))^(-n2/2)
+    return(term1 * term2)
+  }
+  
+  # Define the denominator integrand
+  den_integrand <- function(delta) {
+    term1 <- (1 + (n1/(n1+1)) * delta^2/(df1 * var1))^(-n1/2)
+    term2 <- (1 + (n2/(n2+1)) * ((delta-d)^2)/(df2 * var2))^(-n2/2)
+    return(term1 * term2)
+  }
+  
+  # Calculate reasonable bounds for the integral
+  bound <- max(abs(d) + 10 * sqrt(max(var1, var2)), 100)
+  
+  # Compute the integrals
+  num_integral <- integral(num_integrand, -bound, bound)
+  den_integral <- integral(den_integrand, -bound, bound)
+  
+  # Calculate the product term
+  prod_term <- sqrt(n1 + 1) * sqrt(n2 + 1)
+  
+  # Calculate final Bayes factor
+  bf01 <- prod_term * num_integral/den_integral
+  
+  return(list(
+    bf01 = bf01,
+    bf10 = 1/bf01,
+    d = d,
+    num_integral = num_integral,
+    den_integral = den_integral,
+    prod_term = prod_term
+  ))
+}

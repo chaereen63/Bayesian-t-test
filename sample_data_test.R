@@ -1,4 +1,4 @@
-set.seed(986)
+# set.seed(986)
 # Function to run all Bayesian analyses for given parameters
 run_bayes_analyses <- function(mean1, mean2, var1, var2, n1, n2) {
   library(BayesFactor)

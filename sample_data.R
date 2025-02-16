@@ -5,14 +5,8 @@ library(RoBTT)        # BMA using RoBTT
 library(bain)         # bain
 
 # 연습 (pilot의 조건3의 구체적 예에 해당, 작은 표본이 더 큰 분산)
-mean1 = 50
-var1 = 12
-sd1 = sqrt(12)
-n1 = 20
-mean2 = 55
-var2 = 40
-sd2 = sqrt(40)
-n2 = 12
+mean1 = 50 ; var1 = 12 ; sd1 = sqrt(12) ; n1 = 20
+mean2 = 55 ; var2 = 40 ; sd2 = sqrt(40) ; n2 = 12
 
 # 0. Welch's t-test
 t_stat <- (mean1 - mean2) / sqrt(sd1^2/n1 + sd2^2/n2)
@@ -79,8 +73,8 @@ cat("t-statistic:", t_stat, "df:", df, "\n")
 jags_model <- "
 model {
   # Data level - using sufficient statistics
-  y1_mean ~ dnorm(muData1, precision1/n1)  # Sample mean distribution
-  y2_mean ~ dnorm(muData2, precision2/n2)  # Sample mean distribution
+  y1_mean ~ dnorm(muData1, precision1*n1)  
+  y2_mean ~ dnorm(muData2, precision2*n2) #for likelihood
   
   # Parameter priors - matching WinBUGS Cauchy implementation
   delta ~ dnorm(0, lambdaDelta)
@@ -123,8 +117,8 @@ Wetzels <- function(mean1, mean2, sd1, sd2, n1, n2,
   # Standardize summary statistics like WinBUGS version
   pooled_sd <- sqrt(((n1-1)*sd1^2 + (n2-1)*sd2^2)/(n1+n2-2))
   mean2_std <- (mean2 - mean1)/sd1
-  mean1_std <- (mean1 - mean1)/sd1  # Will be 0
-  sd1_std <- sd1/sd1  # Will be 1
+  mean1_std <- 0
+  sd1_std <- 1
   sd2_std <- sd2/sd1
   
   # Prepare data list for JAGS
@@ -240,8 +234,8 @@ result <- Wetzels(mean1 = mean1,    # 그룹1 평균
                    sd2 = sd2,      # 그룹2 표준편차
                    n1 = n1,        # 그룹1 표본크기
                    n2 = n2,        # 그룹2 표본크기
-                   iters = 5000,
-                   burns = 1000,
-                   chains = 4,
+                   iters = 1000000,
+                   burns = 800001,
+                   chains = 1,
                    prior = 'cauchy')
 result$meanBF

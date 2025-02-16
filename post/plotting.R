@@ -13,7 +13,7 @@ results_df <- readRDS("./post/final_merged_results.RDS")
 # 데이터 변환
 # bain BF가 역수라서 변환
 results_df %>% 
-  select("scenario", "true_model", "rho", "sdr", "delta", "BF_robtt_effect", "BF_bain_student", "BF_bain_welch", "BF_bayesfactor") %>%
+  select("scenario", "true_model", "rho", "sdr", "delta", "BF_robtt_effect", "BF_bain_student", "BF_bain_welch", "BF_bayesfactor","BF_wetzels") %>%
   mutate(BF_bain_student = (BF_bain_student)^(-1), BF_bain_welch = (BF_bain_welch)^(-1)) ->
   result_inv
 
@@ -41,7 +41,7 @@ ggplot(result_long, aes(x = log_BF, y = factor(scenario), fill = model)) +
     quantiles = 2
   ) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "red", size = 0.5) + #log BF = 0, BF=1인 지점
-  facet_wrap(~ true_model, scales = "free") +  # scales = "free" 추가
+  facet_wrap(~ delta, scales = "free") +  # scales = "free" 추가
   theme_minimal() +
   labs(
     title = "Distribution of log10(Bayes Factors) by Scenario, Model, and True Hypothesis",
@@ -56,7 +56,7 @@ ggplot(result_long, aes(x = log_BF, y = factor(scenario), fill = model)) +
 # 시각화 - Boxplot
 ggplot(result_long, aes(x = factor(scenario), y = log_BF, fill = model)) +
   geom_boxplot(position = position_dodge(width = 0.9), outlier.alpha = 0.3) +
-  facet_wrap(~ true_model, scales = "free_y") +
+  facet_wrap(~ delta, scales = "free_y") +
   theme_minimal() +
   labs(
     title = "Distribution of log10(Bayes Factors) by Scenario, Model, and True Hypothesis",
