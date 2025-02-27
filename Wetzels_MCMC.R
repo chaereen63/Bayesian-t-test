@@ -1,4 +1,4 @@
-# Stan 모델 (이전과 동일)
+# Stan 모델, mu 분포를 다르게 정의하는 게 좋을 거 같음.
 stan_code <- "
 data {
   int<lower=0> N1;

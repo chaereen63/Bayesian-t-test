@@ -1,4 +1,6 @@
-  #### 효과크기 별 JZS와 GICA의 크기 비교 ####
+source(file = file.path("./Korea_pub/functionsK.R"))
+
+#### 효과크기 별 JZS와 GICA의 크기 비교 ####
   # 전체적인 패턴을 보기 위한 함수 (ratio로 비교)
   calculate_proportions_ratio <- function(data) {
     data %>%
@@ -18,7 +20,7 @@
       )
   }
   
-  results_df2 %>%
+  results_df3 %>%
     calculate_proportions_ratio() %>%
     arrange(scenario, effect_size_cat)
   
@@ -42,7 +44,7 @@
       )
   }
   
-  results_df2 %>%
+  results_df3 %>%
     calculate_proportions_bf() %>%
     arrange(scenario, effect_size_cat)
   
@@ -72,10 +74,10 @@
       )
   }
   
-  results_df2 %>%
+  results_df3 %>%
     calcul_per_effect() %>%
     arrange(scenario, effect_size_cat) %>%
-  print(n = 36)
+  print(n = 45)
   
 #### calculate mean of log BF ####
   calculate_means <- function(data) {
@@ -113,33 +115,79 @@
     mutate(means_medium, effect = "medium"), 
     mutate(means_strong, effect = "strong")
   ) %>%
-    arrange(effect, scenario, model) %>% print(n=32)  
+    arrange(effect, scenario, model) %>% print(n=40)  
   
 #### 소수의 극단값 확인 ####
   #### 생성 데이터 효과도 저장한 결과 ####
-  results_df3 <- readRDS("./Korea_pub/final_merged_resultsK_dsd.RDS")
-  results_df3 %>% select(BF_jzs, BF_gica, std_mean_diff, sd_x, sd_y, sdr, delta, scenario) -> results_df3
+  # results_df <- readRDS("./Korea_pub/final_merged_resultsKbig.RDS")
+  results_df2 %>% 
+    mutate(std_mean_diff=mean_diff/mean_sd(sd_x,sd_y)) %>%
+    select(BF_jzs, BF_gica, std_mean_diff, sd_x, sd_y, sdr, delta, scenario) -> results_df4
   
-  results_df3 %>%
+  # 1단계: 기본 필터링
+  results_df4 %>%
     filter(
-      #(scenario == 1 & BF_gica/BF_jzs < 0.5) |    # 시나리오1: GICA > JZS인 경우 찾기
-        (scenario == 2 & abs(BF_gica/BF_jzs - 1) > 0.5) |  # 시나리오2: 1 중심에서 크게 벗어난 경우
-        (scenario == 3 & BF_gica/BF_jzs > 1.5) |     # 시나리오3: GICA > JZS인 경우 찾기 
-        (scenario == 4 & BF_gica/BF_jzs < 0.5)      # 시나리오4: GICA < JZS인 경우 찾기
-    ) %>%
-    arrange(scenario, BF_gica/BF_jzs) %>%
-    select(scenario, std_mean_diff, sd_x, sd_y, sdr, delta, BF_jzs, BF_gica, ratio = BF_gica/BF_jzs) %>%
-    print(n=30)
+      (scenario == 2 & abs(BF_gica/BF_jzs - 1) > 0.5) |
+        (scenario == 3 & abs(BF_gica/BF_jzs - 1) > 0.5) |
+        (scenario == 4 & BF_gica/BF_jzs > 1.5) |
+        (scenario == 5 & BF_gica/BF_jzs < 0.5)
+    ) -> filtered_df
   
-  results_df3 %>%
+  # 2단계: 정렬
+  filtered_df %>%
+    arrange(scenario, BF_gica/BF_jzs) -> arranged_df
+  
+  # 3단계: BF_gica 확인
+  head(arranged_df$BF_gica)
+  
+  # 4단계: 포맷팅 시도
+  filtered_df %>%
+    mutate(log_jzs = format(BF_jzs, scientific = TRUE),
+           log_gica = format(BF_gica, scientific = TRUE),sd_ratio = sd_x/sd_y) %>%
+    select(scenario, std_mean_diff, sd_x, sd_y, sd_ratio, sdr, delta, log_jzs, 
+           log_gica, ratio = BF_gica/BF_jzs) %>%
+    print(n = 40)
+  
+  
+  #### sample size = 200 ####
+  # 데이터가 results_df4에 저장되어 있다고 가정
+    # 각 시나리오별 전체 케이스 수와 기준을 벗어난 케이스 수 계산
+  summary_stats <- results_df4 %>%
+    group_by(scenario) %>%
+    summarise(
+      total_cases = n(),
+      outlier_cases = sum(case_when(
+        scenario == 2 ~ abs(BF_gica/BF_jzs - 1) > 0.5, #시나리오 추가
+        scenario == 3 ~ abs(BF_gica/BF_jzs - 1) > 0.5,
+        scenario == 4 ~ BF_gica/BF_jzs > 1.5,
+        scenario == 5 ~ BF_gica/BF_jzs < 0.5,
+        TRUE ~ FALSE
+      )),
+      outlier_percentage = round(outlier_cases / total_cases * 100, 2)
+    )
+  
+  # 결과 출력
+  print(summary_stats)
+  
+  # 추가적으로 이상치의 특성을 파악하기 위한 요약 통계
+  detailed_stats <- results_df4 %>%
     filter(
-      (scenario == 2 & abs(BF_gica/BF_jzs - 1) > 0.5) |  # 시나리오2: 1 중심에서 크게 벗어난 경우
-        (scenario == 3 & BF_gica/BF_jzs > 1.5) |   # 시나리오3: GICA > JZS인 경우 찾기   
-        (scenario == 4 & BF_gica/BF_jzs < 0.5)   # 시나리오4: GICA < JZS인 경우 찾기
+      case_when(
+        scenario == 2 ~ abs(BF_gica/BF_jzs - 1) > 0.5,
+        scenario == 3 ~ abs(BF_gica/BF_jzs - 1) > 0.5,
+        scenario == 4 ~ BF_gica/BF_jzs > 1.5,
+        scenario == 5 ~ BF_gica/BF_jzs < 0.5,
+        TRUE ~ FALSE
+      )
     ) %>%
-    arrange(scenario, BF_gica/BF_jzs) %>%
-    mutate(sd_ratio = sd_x/sd_y) %>%
-    select(scenario, std_mean_diff, sd_x, sd_y, sd_ratio, sdr, delta, BF_jzs, BF_gica, bf_ratio = BF_gica/BF_jzs) %>%
-    print(n=30)
-  results_df3 %>% mutate(sd_sdr = sd_x/sd_y) -> sd_sdr
+    group_by(scenario) %>%
+    summarise(
+      mean_ratio = mean(BF_gica/BF_jzs),
+      median_ratio = median(BF_gica/BF_jzs),
+      sd_ratio = sd(BF_gica/BF_jzs),
+      min_ratio = min(BF_gica/BF_jzs),
+      max_ratio = max(BF_gica/BF_jzs)
+    )
+  
+  print(detailed_stats)
   

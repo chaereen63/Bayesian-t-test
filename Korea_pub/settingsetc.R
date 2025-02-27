@@ -3,11 +3,11 @@ library(tidyverse)
 
 # 시나리오 정의 (rho 값을 고정)
 scenarios <- list(
-  list(n1 = 40, n2 = 60, rho = 0.5),    # rho 고정값 0.5, SDR 1
-  list(n1 = 50, n2 = 50, rho = 0.5),    # SDR 1 _추가(2025-02-14)
-  list(n1 = 50, n2 = 50, rho = 0.2),    # rho 고정값 0.2, SDR 2
-  list(n1 = 40, n2 = 60, rho = 0.2),    # rho 고정값 0.2, SDR 2
-  list(n1 = 40, n2 = 60, rho = 0.8)     # rho 고정값 0.8, SDR 0.5
+  list(n1 = 15, n2 = 15, rho = 0.5),    # rho 고정값 0.5, SDR 1
+  list(n1 = 15, n2 = 15, rho = 0.5),    # SDR 1
+  list(n1 = 15, n2 = 15, rho = 0.2),    # rho 고정값 0.2, SDR 2
+  list(n1 = 12, n2 = 18, rho = 0.2),    # rho 고정값 0.2, SDR 2
+  list(n1 = 12, n2 = 18, rho = 0.8)     # rho 고정값 0.8, SDR 0.5
 )
 
 # 효과 크기 설정
@@ -74,4 +74,4 @@ sdr_stats <- settings %>%
 print(sdr_stats)
 
 # 결과 저장
-saveRDS(settings, file = "Korea_pub/settingsK100.RDS")
+saveRDS(settings, file = "Korea_pub/settingsK30.RDS")

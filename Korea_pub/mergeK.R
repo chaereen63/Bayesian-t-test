@@ -2,7 +2,7 @@ library(dplyr)
 library(purrr)
 
 home_dir <- "./Korea_pub"
-output_dir <- "D:/resultsK"
+output_dir <- "D:/results30" #저장경로 수정하기
 
 # 안전한 추출 함수
 safe_extract <- function(x, default = NA) {
@@ -21,7 +21,7 @@ extract_bayes_factor <- function(bf_object) {
   }, error = function(e) NA)
 }
 
-# 단일 결과를 처리하는 함수
+#1. 단일 결과를 처리하는 함수 (RoBTT포함)
 process_result <- function(temp_result) {
   list(
     # RoBTT의 homo/hetero BF 추출
@@ -73,7 +73,7 @@ print(str(results_df))
 print(head(results_df))
 print(summary_by_scenario)
 
-# 표본 효과크기(표준화된 평균차 까지 저장)
+#2. 표본 효과크기(표준화된 평균차 까지 저장)
 process_resultd <- function(temp_result) {
   list(
     BF_jzs = extract_bayes_factor(temp_result$bayes_factor),
@@ -101,7 +101,7 @@ rownames(results_df_d) <- NULL
 # 결과 저장
 saveRDS(results_df_d, file = file.path(home_dir, "final_merged_resultsK_d.RDS"))
 
-## 표준편차까지 계산
+##3. 표준편차까지 계산
 process_resultdsd <- function(temp_result) {
   # 각 그룹의 표준편차 계산
   data <- temp_result$bayes_factor@data
@@ -111,7 +111,9 @@ process_resultdsd <- function(temp_result) {
   list(
     BF_jzs = extract_bayes_factor(temp_result$bayes_factor),
     BF_gica = safe_extract(temp_result$gica$bf10),
-    std_mean_diff = safe_extract(temp_result$gica$d),
+    student_p = temp_result$student_p,
+    welch_p = temp_result$welch_p,
+    mean_diff = safe_extract(temp_result$gica$d),
     rho = safe_extract(temp_result$rho),
     sdr = safe_extract(temp_result$sdr),
     delta = safe_extract(temp_result$delta),
@@ -122,7 +124,7 @@ process_resultdsd <- function(temp_result) {
 }
 # 모든 결과 파일 읽고 처리
 filesd <- list.files(output_dir, pattern = "^results_\\d+\\.RDS$", full.names = TRUE)
-results <- map(files, ~{
+results <- map(filesd, ~{
   temp_result <- readRDS(.x)
   process_resultdsd(temp_result)
 })
@@ -133,4 +135,4 @@ results_df_dsd <- bind_rows(results)
 rownames(results_df_dsd) <- NULL
 
 # 결과 저장
-saveRDS(results_df_dsd, file = file.path(home_dir, "final_merged_resultsK_dsd.RDS"))
+saveRDS(results_df_dsd, file = file.path(home_dir, "final_merged_results30.RDS"))

@@ -8,15 +8,15 @@ library(tidyverse)
 
 # Set the computational node
 home_dir   <- "."
-output_dir <- file.path("D:/resultsN") #USB 경로 수정하기
+output_dir <- file.path("D:/resultsV2") #USB 경로 수정하기
 start_dir  <- getwd()
 
 # Load the functions and settings
-source(file = file.path(home_dir, "./Korea_pub/functionsK.R"))
-settings <- readRDS(file = file.path(home_dir, "/Korea_pub/settingsNew.RDS")) #추가된 조건
+source(file = file.path(home_dir, "./New/functionsN.R"))
+settings <- readRDS(file = file.path(home_dir, "/New/settingsVMean.RDS")) #추가된 조건
 
 print(head(settings))
-print(nrow(settings)) # 효과크기 조건이 빠졌으므로 15*500
+print(nrow(settings)) # 평균차 조건추가 90*500
 
 tracker  <- "sim_loop"
 max_time <- 24.0  # Set maximum runtime in hours
@@ -30,45 +30,24 @@ run_simulation <- function(current_settings) {
     sd1   = current_settings$sd1,
     sd2   = current_settings$sd2,
     n1    = current_settings$n1,
-    n2    = current_settings$n2
+    n2    = current_settings$n2,
+    seed  = current_settings$seed
   )
   
-  # 1. RoBTT (지금은 필요 없음)
-  # fit_robtt <- RoBTT(
-  #   x1 = data$x1,
-  #   x2 = data$x2,
-  #   prior_delta = prior("cauchy", list(0, 1/sqrt(2))),
-  #   prior_rho  = prior("beta",   list(1.5, 1.5)),
-  #   chains = 2, warmup = 1000, iter = 5000,
-  #   parallel = FALSE
-  # )
-  # fit_robtt_ind = summary(fit_robtt, type = "individual")
-  
-  # 2. BayesFactor_JZS
+  # 1. BayesFactor_JZS
   fit_bf <- ttestBF(x = data$x1, y = data$x2)
   
-  # 3. Giron & Del Castillo
+  # 2. Giron & Del Castillo
   fit_gica <- gicaBF(x1 = data$x1, x2 = data$x2)
   
   # Student's t와 Welch's t의 p-value만 저장
-  student_p <- t.test(data$x1, data$x2, var.equal=T)$p.value
-  welch_p <- t.test(data$x1, data$x2, var.equal=F)$p.value
+    # student_p <- t.test(data$x1, data$x2, var.equal=T)$p.value
+    # welch_p <- t.test(data$x1, data$x2, var.equal=F)$p.value
   
   #collect result
    results <- list(
-  #   robtt = list(
-  #     bf_effect = list(
-  #       homoBF = as.numeric(fit_robtt_ind$models[[5]]$summary[4,2]) / as.numeric(fit_robtt_ind$models[[1]]$summary[4,2]),
-  #       heteBF = as.numeric(fit_robtt_ind$models[[7]]$summary[4,2]) / as.numeric(fit_robtt_ind$models[[3]]$summary[4,2])
-  #     )
-  #   ),
     bayes_factor = fit_bf,  # 전체 결과 저장
     gica = fit_gica,  # 전체 결과 저장
-    student_p = student_p,
-    welch_p = welch_p,
-    rho = current_settings$rho,
-    sdr = current_settings$sdr,
-    delta = current_settings$delta,
     scenario = current_settings$scenario
   )
   
@@ -96,7 +75,7 @@ create_checkpoint_from_results <- function(output_dir) {
 }
 
 # 시뮬레이션 시작 전 처리
-start_loop <- create_checkpoint_from_results(output_dir)
+start_loop <- create_checkpoint_from_results("D:/resultsV")
 print(paste("Starting simulation from loop:", start_loop))
 
 # 기존 시뮬레이션 루프 수정
