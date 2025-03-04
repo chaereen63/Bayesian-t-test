@@ -2,7 +2,7 @@ library(dplyr)
 library(purrr)
 
 home_dir <- "./New"
-output_dir <- "D:/resultsV3" #저장경로 수정하기
+output_dir <- "D:/resultsm1_200" #저장경로 수정하기
 
 # 안전한 추출 함수
 safe_extract <- function(x, default = NA) {
@@ -31,15 +31,17 @@ process_resultdsd <- function(temp_result) {
   sd_y <- sd(data$y[data$group == "y"])
   
   list(
+    scenario = safe_extract(temp_result$scenario),
     BF_jzs = extract_bayes_factor(temp_result$bayes_factor),
     BF_gica = safe_extract(temp_result$gica$bf10),
-    # student_p = temp_result$student_p,
-    # welch_p = temp_result$welch_p,
     mean_diff = safe_extract(temp_result$gica$d),
     sdr = safe_extract(temp_result$sdr),
-    scenario = safe_extract(temp_result$scenario),
+    n1 = safe_extract(temp_result$n1),
+    n2 = safe_extract(temp_result$n2),
     sd_x = sd_x,
-    sd_y = sd_y
+    sd_y = sd_y,
+    welch_p = safe_extract(temp_result$welch_p),
+    student_p = safe_extract(temp_result$student_p)
   )
 }
 # 모든 결과 파일 읽고 처리
@@ -55,4 +57,4 @@ results_df_dsd <- bind_rows(results)
 rownames(results_df_dsd) <- NULL
 
 # 결과 저장
-saveRDS(results_df_dsd, file = file.path(home_dir, "merged_resultsV3.RDS"))
+saveRDS(results_df_dsd, file = file.path(home_dir, "merged_resultsm1_200.RDS"))

@@ -6,7 +6,7 @@ library(tidyr);library(gridExtra)
 source(file = file.path("./Korea_pub/functionsK.R"))
 
 # 데이터 로드
-results_df <- readRDS("./Korea_pub/final_merged_results100.RDS")
+results_df <- readRDS("./Korea_pub/final_merged_results200.RDS")
 
 # 데이터 변환
 results_df %>% 
@@ -36,7 +36,15 @@ result_long <- result_temp %>%
                          levels = c("no effect", "weak", "medium", "strong"))
   )
 
-# 시나리오 레이블 생성
+# 시나리오 레이블 생성 total sample size = 30
+scenarios <- tibble(
+  scenario = 1:5,
+  n1 = c(12, 15, 15, 12, 12),
+  n2 = c(12, 15, 15, 18, 18),
+  sdr = c(1.00, 1.00, 2.00, 2.00, 0.50)
+) %>%
+  mutate(label = sprintf("n1=%d, n2=%d, SDR=%.2f", n1, n2, sdr))
+# 시나리오 레이블 생성 total sample size = 100
 scenarios <- tibble(
   scenario = 1:5,
   n1 = c(40, 50, 50, 40, 40),
@@ -44,9 +52,7 @@ scenarios <- tibble(
   sdr = c(1.00, 1.00, 2.00, 2.00, 0.50)
 ) %>%
   mutate(label = sprintf("n1=%d, n2=%d, SDR=%.2f", n1, n2, sdr))
-
   # total sample size = 200
-  # 시나리오 레이블 생성
   scenarios <- tibble(
     scenario = 1:5,
     n1 = c(80, 100, 100, 80, 80),
@@ -378,7 +384,7 @@ evidence_summary2 <- evidence_proportions %>%
 print(evidence_summary2, n = Inf)
 
 #### 생성 데이터 효과도 저장한 결과 ####
-results_df2 <- readRDS("./Korea_pub/final_merged_results100.RDS")
+results_df2 <- readRDS("./Korea_pub/final_merged_results30.RDS")
 results_df2 %>% 
   mutate(
     # 시나리오별 n1, n2 할당

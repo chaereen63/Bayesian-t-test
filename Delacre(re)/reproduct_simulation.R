@@ -26,7 +26,7 @@ create_settings <- function(scenario, replications) {
 # 재현성 분석용 설정 (평균차 = 0)
 reproducibility_settings <- tibble(scenario = 1:4) %>%
   mutate(
-    settings = map(scenario, ~create_settings(.x, replications = 1000000))  # 10000회로 증가
+    settings = map(scenario, ~create_settings(.x, replications = 50000))  # 50000회로 증가
   ) %>%
   select(-scenario) %>%
   unnest(settings) %>%
@@ -127,7 +127,7 @@ create_delacre_style_plots <- function(data) {
       
       # Student's t-test
       p_student <- ggplot(scen_data, aes(x = student_p)) +
-        geom_histogram(bins = 20, fill = "skyblue", color = "darkblue", alpha = 0.7) +
+        geom_histogram(bins = 30, fill = "skyblue", color = "darkblue", alpha = 0.7) +
         geom_vline(xintercept = 0.05, linetype = "dashed", color = "red", linewidth = 0.5) +
         scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, by = 0.2)) +
         labs(
