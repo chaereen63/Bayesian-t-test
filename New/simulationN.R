@@ -8,12 +8,12 @@ library(tidyverse)
 
 # Set the computational node
 home_dir   <- "."
-output_dir <- file.path("D:/resultsm1_200") #USB 경로 수정하기
+output_dir <- file.path("D:/resultsm1_44") #USB 경로 수정하기
 start_dir  <- getwd()
 
 # Load the functions and settings
 source(file = file.path(home_dir, "./New/functionsN.R"))
-settings <- readRDS(file = file.path(home_dir, "/New/settingsm1_200.RDS")) #추가된 조건
+settings <- readRDS(file = file.path(home_dir, "/New/settingsm1_44.RDS")) #추가된 조건
 
 print(head(settings))
 print(nrow(settings)) # 평균차 조건추가 8*500
@@ -41,15 +41,15 @@ run_simulation <- function(current_settings) {
   fit_gica <- gicaBF(x1 = data$x1, x2 = data$x2)
   
   # Student's t와 Welch's t의 p-value만 저장
-    student_p <- t.test(data$x1, data$x2, var.equal=T)$p.value
-    welch_p <- t.test(data$x1, data$x2, var.equal=F)$p.value
+    #student_p <- t.test(data$x1, data$x2, var.equal=T)$p.value
+    #welch_p <- t.test(data$x1, data$x2, var.equal=F)$p.value
   
   #collect result
    results <- list(
     bayes_factor = fit_bf,  # 전체 결과 저장
     gica = fit_gica,  # 전체 결과 저장
-    student_p = student_p,
-    welch_p = welch_p,
+    #student_p = student_p,
+    #welch_p = welch_p,
     scenario = current_settings$scenario,
     n1 = current_settings$n1,
     n2 = current_settings$n2,

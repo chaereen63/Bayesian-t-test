@@ -2,12 +2,17 @@ source("New/functionsN.R")
 library(tidyverse)
 library(gridExtra)
 
-# 시나리오 정의 - 4개로 줄임
+# 시나리오 정의
 scenarios <- list(
-  list(n1 = 40, n2 = 60, sd1 = 2, sd2 = 2),    # SDR=1
-  list(n1 = 40, n2 = 60, sd1 = 2, sd2 = 4),    # SDR=2
-  list(n1 = 40, n2 = 60, sd1 = 2, sd2 = 1),    # SDR=0.5
-  list(n1 = 50, n2 = 50, sd1 = 2, sd2 = 4)     # 동일 표본 크기
+  # total sample size = 100
+  list(n1 = 50, n2 = 50, sd1 = 2, sd2 = 2),    
+  list(n1 = 50, n2 = 50, sd1 = 2, sd2 = 1),    
+  list(n1 = 40, n2 = 60, sd1 = 2, sd2 = 2),    
+  list(n1 = 40, n2 = 60, sd1 = 2, sd2 = 1),    
+  list(n1 = 40, n2 = 60, sd1 = 2, sd2 = 4),
+  list(n1 = 60, n2 = 40, sd1 = 2, sd2 = 2),
+  list(n1 = 60, n2 = 40, sd1 = 2, sd2 = 1),
+  list(n1 = 60, n2 = 40, sd1 = 2, sd2 = 4)
 )
 
 # 설정 생성 함수
@@ -23,18 +28,18 @@ create_settings <- function(scenario, replications) {
   )
 }
 
-# 재현성 분석용 설정 (평균차 = 0)
-reproducibility_settings <- tibble(scenario = 1:4) %>%
+# 재현성 분석용 설정
+reproducibility_settings <- tibble(scenario = 1:8) %>%
   mutate(
-    settings = map(scenario, ~create_settings(.x, replications = 50000))  # 50000회로 증가
+    settings = map(scenario, ~create_settings(.x, replications = 50000))
   ) %>%
   select(-scenario) %>%
   unnest(settings) %>%
   mutate(
-    mean1 = 0,
-    mean2 = 0,
+    mean1 = 0.5,
+    mean2 = -0.5, # 대립가설이 참인 조건. 평균차=1
     sdr = sd2/sd1,
-    cohens_d = 0
+    cohens_d = cohens_d(mean1, mean2, sd1,sd2)
   )
 
 # 재현성 분석용 시뮬레이션 함수 (베이지안 요소 제거)
@@ -91,7 +96,7 @@ analysis_data <- reproducibility_results %>%
   select(-result)  # 원본 result 열 제거
 
 # 결과 저장 (최종 분석 데이터)
-saveRDS(analysis_data, file = "Delacre(re)/reproduct_analysis_data.RDS")
+saveRDS(analysis_data, file = "Delacre(re)/reproduct_analysis_datas8.RDS")
 
 # 원문과 유사한 레이아웃의 그래프 생성 함수
 create_delacre_style_plots <- function(data) {

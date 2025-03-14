@@ -3,6 +3,29 @@ library(tidyverse)
 
 # 시나리오 정의
 scenarios <- list(
+  # total sample size = 30
+  list(n1 = 15, n2 = 15, sd1 = 2, sd2 = 2),    
+  list(n1 = 15, n2 = 15, sd1 = 2, sd2 = 1),    
+  list(n1 = 12, n2 = 18, sd1 = 2, sd2 = 2),    
+  list(n1 = 12, n2 = 18, sd1 = 2, sd2 = 1),    
+  list(n1 = 12, n2 = 18, sd1 = 2, sd2 = 4),
+  list(n1 = 18, n2 = 12, sd1 = 2, sd2 = 2),
+  list(n1 = 18, n2 = 12, sd1 = 2, sd2 = 1),
+  list(n1 = 18, n2 = 12, sd1 = 2, sd2 = 4)
+)
+
+scenarios <- list(
+  # total sample size = 100
+  list(n1 = 50, n2 = 50, sd1 = 2, sd2 = 2),    
+  list(n1 = 50, n2 = 50, sd1 = 2, sd2 = 1),    
+  list(n1 = 40, n2 = 60, sd1 = 2, sd2 = 2),    
+  list(n1 = 40, n2 = 60, sd1 = 2, sd2 = 1),    
+  list(n1 = 40, n2 = 60, sd1 = 2, sd2 = 4),
+  list(n1 = 60, n2 = 40, sd1 = 2, sd2 = 2),
+  list(n1 = 60, n2 = 40, sd1 = 2, sd2 = 1),
+  list(n1 = 60, n2 = 40, sd1 = 2, sd2 = 4)
+)
+scenarios <- list(
   # total sample size = 200
   list(n1 = 100, n2 = 100, sd1 = 2, sd2 = 2),    
   list(n1 = 100, n2 = 100, sd1 = 2, sd2 = 1),    
@@ -62,4 +85,4 @@ scenario_stats <- settings %>%
 print(scenario_stats, n=90)
 
 # 결과 저장
-saveRDS(settings, file = "New/settingsm1_200.RDS")
+saveRDS(settings, file = "New/settingsm1_44.RDS")

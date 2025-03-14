@@ -7,9 +7,9 @@ home_dir <- "."
 source(file = file.path("./New/functionsN.R"))
 
 # Load all three RDS files
-results_30 <- readRDS("./New/merged_resultsm1_30.RDS")
-results_100 <- readRDS("./New/merged_resultsm1_100.RDS")
-results_200 <- readRDS("./New/merged_resultsm1_200.RDS")
+results_30 <- readRDS("./New/merged_resultsm2_30.RDS")
+results_100 <- readRDS("./New/merged_resultsm2_100.RDS")
+results_200 <- readRDS("./New/merged_resultsm2_200.RDS")
 
 # 시나리오 정의 - sample size = 30인 경우
 scenarios_30 <- tibble(
@@ -18,8 +18,10 @@ scenarios_30 <- tibble(
   n2 = c(15, 15, 18, 18, 18, 12, 12, 12),
   sd1 = c(2, 2, 2, 2, 2, 2, 2, 2),
   sd2 = c(2, 1, 2, 1, 4, 2, 1, 4),
-  arith_b = c(0.5, 0.632, 0.5, 0.632, 0.316, 0.5, 0.632, 0.316),
-  pooled_b = c(0.483, 0.611, 0.483, 0.651, 0.289, 0.483, 0.577, 0.326)
+  # arith_b = c(0.5, 0.632, 0.5, 0.632, 0.316, 0.5, 0.632, 0.316), mean_diff=1
+  # pooled_b = c(0.495, 0.626, 0.495, 0.667, 0.296, 0.495, 0.592, 0.334)
+  arith_b = c(1, 1.26, 1, 1.26, 0.632, 1, 1.26, 0.632),
+  pooled_b = c(0.966, 1.22, 0.966, 1.3, 0.577, 0.966, 1.15, 0.651)
 ) %>%
   mutate(
     sdr = sd2/sd1,
@@ -36,8 +38,10 @@ scenarios_100 <- tibble(
   n2 = c(50, 50, 60, 60, 60, 40, 40, 40),
   sd1 = c(2, 2, 2, 2, 2, 2, 2, 2),
   sd2 = c(2, 1, 2, 1, 4, 2, 1, 4),
-  arith_b = c(0.5, 0.632, 0.5, 0.632, 0.316, 0.5, 0.632, 0.316),
-  pooled_b = c(0.495, 0.626, 0.495, 0.667, 0.296, 0.495, 0.592, 0.334)
+  # arith_b = c(0.5, 0.632, 0.5, 0.632, 0.316, 0.5, 0.632, 0.316), mean_diff=1
+  # pooled_b = c(0.495, 0.626, 0.495, 0.667, 0.296, 0.495, 0.592, 0.334)
+  arith_b = c(1, 1.26, 1, 1.26, 0.632, 1, 1.26, 0.632),
+  pooled_b = c(0.99, 1.25, 0.99, 1.33, 0.592, 0.990, 1.18, 0.667)
 ) %>%
   mutate(
     sdr = sd2/sd1,
@@ -54,8 +58,10 @@ scenarios_200 <- tibble(
   n2 = c(100, 100, 120, 120, 120, 80, 80, 80),
   sd1 = c(2, 2, 2, 2, 2, 2, 2, 2),
   sd2 = c(2, 1, 2, 1, 4, 2, 1, 4),
-  arith_b = c(0.5, 0.632, 0.5, 0.632, 0.316, 0.5, 0.632, 0.316),
-  pooled_b = c(0.497, 0.629, 0.497, 0.671, 0.297, 0.497, 0.595, 0.335)
+  # arith_b = c(0.5, 0.632, 0.5, 0.632, 0.316, 0.5, 0.632, 0.316), # mean_diff=1
+  # pooled_b = c(0.495, 0.626, 0.495, 0.667, 0.296, 0.495, 0.592, 0.334)
+  arith_b = c(1, 1.26, 1, 1.26, 0.632, 1, 1.26, 0.632),
+  pooled_b = c(0.995, 1.26, 0.995, 1.34, 0.595, 0.995, 1.19, 0.671)
 ) %>%
   mutate(
     sdr = sd2/sd1,
@@ -206,7 +212,7 @@ print(box_200)
 # === 추가 분석: BF_jzs와 BF_gica의 비교 분석 ===
 
 # 방법별 요약 통계 계산
-summary_stats_200 <- results_200_tidy %>% # 표본 바꾸기
+summary_stats_30 <- results_30_tidy %>% # 표본 바꾸기
   group_by(scenario, method_short) %>%
   summarise(
     mean_log_BF = mean(log_BF),
@@ -217,7 +223,7 @@ summary_stats_200 <- results_200_tidy %>% # 표본 바꾸기
     .groups = "drop"
   )
 
-print(summary_stats_200)
+print(summary_stats_30)
 
 # 다른 방법: 로그 차이 사용 (log(BF_GICA) - log(BF_JZS))
 log_bf_diff <- function(results_df, scenarios_df, title) {
@@ -306,3 +312,85 @@ mean_bar_200 <- plot_mean_bar(results_200_tidy, "(N=200)")
 print(mean_bar_30)
 print(mean_bar_100)
 print(mean_bar_200)
+
+#### 아래부터는 심심해서 해본 그림 그리기 ####
+# 시나리오별 BF_jzs와 BF_gica 간의 상관관계 분석 함수 (파랑-노랑-빨강 색상 대비)
+analyze_correlation <- function(results_df, scenarios_df, title) {
+  # 데이터 준비
+  corr_data <- results_df %>%
+    select(scenario, BF_jzs, BF_gica, mean_diff) %>%
+    mutate(
+      log_BF_jzs = log(BF_jzs),
+      log_BF_gica = log(BF_gica),
+      abs_mean_diff = abs(mean_diff)
+    ) %>%
+    left_join(scenarios_df, by = "scenario")
+  
+  # 절댓값 범위 확인
+  max_abs_diff <- max(corr_data$abs_mean_diff, na.rm = TRUE)
+  
+  # 시나리오별 상관계수 계산
+  corr_stats <- corr_data %>%
+    group_by(scenario) %>%
+    summarise(
+      pearson_r = cor(log_BF_jzs, log_BF_gica, method = "pearson"),
+      r_squared = pearson_r^2,
+      n_obs = n(),
+      label = first(label),
+      .groups = "drop"
+    )
+  
+  # 산점도 생성 - 파랑-노랑-빨강 색상 대비
+  scatter_plot <- ggplot(corr_data, aes(x = log_BF_jzs, y = log_BF_gica)) +
+    # 점 색상을 abs_mean_diff에 따라 설정
+    geom_point(aes(color = abs_mean_diff), alpha = 0.7, size = 1.2) +
+    # 1:1 선 연한 회색으로 표시
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray70", linewidth = 0.5) +
+    # 색상 스케일 설정 - 파랑-노랑-빨강 대비
+    scale_color_gradientn(
+      colors = c("darkblue", "blue", "royalblue", "skyblue", 
+                 "yellow", 
+                 "orange", "red", "darkred"),
+      values = scales::rescale(c(0, max_abs_diff*0.2, max_abs_diff*0.3, max_abs_diff*0.4, 
+                                 max_abs_diff*0.5, max_abs_diff*0.6, max_abs_diff*0.8, max_abs_diff)),
+      name = "|평균 차이(SMD)|"
+    ) +
+    # 각 시나리오별 패널 분리
+    facet_wrap(~ scenario, scales = "free",
+               labeller = labeller(scenario = setNames(
+                 corr_stats$label, 
+                 corr_stats$scenario
+               )),
+               nrow = 2, ncol = 4) +
+    # 각 패널에 상관계수 표시
+    geom_text(data = corr_stats,
+              aes(label = sprintf("R² = %.3f", r_squared),
+                  x = -Inf, y = Inf),
+              hjust = -0.1, vjust = 1.2, size = 3) +
+    # 그래프 제목 및 축 레이블
+    labs(
+      title = paste("Log BF 방법 간 상관관계", title),
+      subtitle = "점선: 1:1 일치선, 점 색상: 평균 차이의 절댓값(|SMD|)",
+      x = expression(log(BF[JZS])),
+      y = expression(log(BF[GICA])),
+      caption = "Note: R² = 결정계수"
+    ) +
+    theme_paper() +
+    theme(
+      aspect.ratio = 1,
+      panel.spacing = unit(1, "lines"),
+      legend.position = "bottom"
+    )
+  
+  return(scatter_plot)
+}
+
+# 각 데이터셋에 대한 상관관계 분석 실행
+scatter_30 <- analyze_correlation(results_30, scenarios_30, "(N=30)")
+scatter_100 <- analyze_correlation(results_100, scenarios_100, "(N=100)")
+scatter_200 <- analyze_correlation(results_200, scenarios_200, "(N=200)")
+
+# 결과 출력
+print(scatter_30)
+print(scatter_100)
+print(scatter_200)

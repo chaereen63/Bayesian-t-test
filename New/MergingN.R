@@ -2,7 +2,7 @@ library(dplyr)
 library(purrr)
 
 home_dir <- "./New"
-output_dir <- "D:/resultsm1_200" #저장경로 수정하기
+output_dir <- "D:/resultsm2_30" #저장경로 수정하기
 
 # 안전한 추출 함수
 safe_extract <- function(x, default = NA) {
@@ -57,4 +57,4 @@ results_df_dsd <- bind_rows(results)
 rownames(results_df_dsd) <- NULL
 
 # 결과 저장
-saveRDS(results_df_dsd, file = file.path(home_dir, "merged_resultsm1_200.RDS"))
+saveRDS(results_df_dsd, file = file.path(home_dir, "merged_resultsm2_30.RDS"))
