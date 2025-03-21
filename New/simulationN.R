@@ -4,16 +4,14 @@ library(rstan)
 library(BayesFactor)
 library(tidyverse)
 
-# set.seed(1234)
-
 # Set the computational node
 home_dir   <- "."
-output_dir <- file.path("D:/resultsm1_44") #USB 경로 수정하기
+output_dir <- file.path("D:/resultsFin30ES8") #USB 경로 수정하기
 start_dir  <- getwd()
 
 # Load the functions and settings
 source(file = file.path(home_dir, "./New/functionsN.R"))
-settings <- readRDS(file = file.path(home_dir, "/New/settingsm1_44.RDS")) #추가된 조건
+settings <- readRDS(file = file.path(home_dir, "/New/set_Fin30ES8.RDS")) #추가된 조건
 
 print(head(settings))
 print(nrow(settings)) # 평균차 조건추가 8*500
@@ -53,7 +51,7 @@ run_simulation <- function(current_settings) {
     scenario = current_settings$scenario,
     n1 = current_settings$n1,
     n2 = current_settings$n2,
-    sdr =current_settings$sdr
+    varr =current_settings$varr
   )
   
   return(results)

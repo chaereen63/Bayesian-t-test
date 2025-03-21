@@ -7,68 +7,56 @@ home_dir <- "."
 source(file = file.path("./New/functionsN.R"))
 
 # Load all three RDS files
-results_30 <- readRDS("./New/merged_resultsm2_30.RDS")
-results_100 <- readRDS("./New/merged_resultsm2_100.RDS")
-results_200 <- readRDS("./New/merged_resultsm2_200.RDS")
+results_30 <- readRDS("./New/mergedFin30ES8.RDS")
+results_100 <- readRDS("./New/mergedFin100ES8.RDS")
+results_200 <- readRDS("./New/mergedFin200ES8.RDS")
 
 # 시나리오 정의 - sample size = 30인 경우
 scenarios_30 <- tibble(
-  scenario = 1:8,
-  n1 = c(15, 15, 12, 12, 12, 18, 18, 18),
-  n2 = c(15, 15, 18, 18, 18, 12, 12, 12),
-  sd1 = c(2, 2, 2, 2, 2, 2, 2, 2),
-  sd2 = c(2, 1, 2, 1, 4, 2, 1, 4),
-  # arith_b = c(0.5, 0.632, 0.5, 0.632, 0.316, 0.5, 0.632, 0.316), mean_diff=1
-  # pooled_b = c(0.495, 0.626, 0.495, 0.667, 0.296, 0.495, 0.592, 0.334)
-  arith_b = c(1, 1.26, 1, 1.26, 0.632, 1, 1.26, 0.632),
-  pooled_b = c(0.966, 1.22, 0.966, 1.3, 0.577, 0.966, 1.15, 0.651)
+  scenario = 1:5,
+  n1 = c(15, 12, 15, 12, 18),
+  n2 = c(15, 18, 15, 18, 12),
+  var1 = c(4, 4, 4, 4, 4),
+  var2 = c(4, 4, 2, 2, 2)
 ) %>%
   mutate(
-    sdr = sd2/sd1,
+    varr = var2/var1,
     total_n = n1 + n2,
     # 레이블에 b값 포함 (간결한 형식)
-    label = sprintf("n1=%d, n2=%d, SDR=%.1f, \nb=%.2f / %.2f", 
-                    n1, n2, sdr, arith_b, pooled_b)
+    label = sprintf("n1=%d, n2=%d, VarR=%.1f", 
+                    n1, n2, varr)
   )
 
 # 시나리오 정의 - sample size = 100인 경우
 scenarios_100 <- tibble(
-  scenario = 1:8,
-  n1 = c(50, 50, 40, 40, 40, 60, 60, 60),
-  n2 = c(50, 50, 60, 60, 60, 40, 40, 40),
-  sd1 = c(2, 2, 2, 2, 2, 2, 2, 2),
-  sd2 = c(2, 1, 2, 1, 4, 2, 1, 4),
-  # arith_b = c(0.5, 0.632, 0.5, 0.632, 0.316, 0.5, 0.632, 0.316), mean_diff=1
-  # pooled_b = c(0.495, 0.626, 0.495, 0.667, 0.296, 0.495, 0.592, 0.334)
-  arith_b = c(1, 1.26, 1, 1.26, 0.632, 1, 1.26, 0.632),
-  pooled_b = c(0.99, 1.25, 0.99, 1.33, 0.592, 0.990, 1.18, 0.667)
+  scenario = 1:5,
+  n1 = c(50, 40, 50, 40, 60),
+  n2 = c(50, 60, 50, 60, 40),
+  var1 = c(4, 4, 4, 4, 4),
+  var2 = c(4, 4, 2, 2, 2)
 ) %>%
   mutate(
-    sdr = sd2/sd1,
+    varr = var2/var1,
     total_n = n1 + n2,
     # 레이블에 b값 포함
-    label = sprintf("n1=%d, n2=%d, SDR=%.1f, \nb=%.2f / %.2f", 
-                     n1, n2, sdr, arith_b, pooled_b)
+    label = sprintf("n1=%d, n2=%d, VarR=%.1f", 
+                     n1, n2, varr)
   )
 
 # 시나리오 정의 - sample size = 200인 경우
 scenarios_200 <- tibble(
-  scenario = 1:8,
-  n1 = c(100, 100, 80, 80, 80, 120, 120, 120),
-  n2 = c(100, 100, 120, 120, 120, 80, 80, 80),
-  sd1 = c(2, 2, 2, 2, 2, 2, 2, 2),
-  sd2 = c(2, 1, 2, 1, 4, 2, 1, 4),
-  # arith_b = c(0.5, 0.632, 0.5, 0.632, 0.316, 0.5, 0.632, 0.316), # mean_diff=1
-  # pooled_b = c(0.495, 0.626, 0.495, 0.667, 0.296, 0.495, 0.592, 0.334)
-  arith_b = c(1, 1.26, 1, 1.26, 0.632, 1, 1.26, 0.632),
-  pooled_b = c(0.995, 1.26, 0.995, 1.34, 0.595, 0.995, 1.19, 0.671)
+  scenario = 1:5,
+  n1 = c(100, 80, 100, 80, 120),
+  n2 = c(100, 120, 100, 120, 80),
+  var1 = c(4, 4, 4, 4, 4),
+  var2 = c(4, 4, 2, 2, 2)
 ) %>%
   mutate(
-    sdr = sd2/sd1,
+    varr = var2/var1,
     total_n = n1 + n2,
     # 레이블에 b값 포함 (더 간결한 형식)
-    label = sprintf("n1=%d, n2=%d, SDR=%.1f\nb=%.2f / %.2f", 
-                    n1, n2, sdr, arith_b, pooled_b)
+    label = sprintf("n1=%d, n2=%d", 
+                    n1, n2, varr)
   )
 # 색상 팔레트와 레이블 정의
 method_colors <- c(
@@ -117,8 +105,8 @@ process_bf_data <- function(results_df, scenarios_df) {
   results_tidy <- results_df %>%
     # Log 변환 적용
     mutate(
-      log_BF_jzs = log(BF_jzs),
-      log_BF_gica = log(BF_gica)
+      log_BF_jzs = log10(BF_jzs),
+      log_BF_gica = log10(BF_gica)
     ) %>%
     # 그래프용 긴 형태로 변환
     pivot_longer(
@@ -152,7 +140,7 @@ plot_bf_histogram <- function(bf_tidy, title) {
                  alpha = 0.7,
                  linewidth = 1.2) +
     facet_wrap(~ scenario, 
-               scales = "free_y",
+               scales = "fixed",
                labeller = labeller(scenario = setNames(bf_tidy$label[!duplicated(bf_tidy$scenario)], 
                                                        unique(bf_tidy$scenario)))) +
     scale_fill_manual(values = method_colors, 
@@ -164,8 +152,8 @@ plot_bf_histogram <- function(bf_tidy, title) {
       x = "log(BF)",
       y = "밀도",
       fill = "방법",
-      color = "방법",
-      caption = "Note: b = arithmetic effect size / pooled effect size"  # 각주 추가
+      color = "방법"#,
+      #caption = "Note: "  # 각주 추가
     ) +
     theme_paper()
 }
@@ -191,28 +179,28 @@ plot_bf_boxplot <- function(bf_tidy, title) {
 
 # === results_30 ===
 results_30_tidy <- process_bf_data(results_30, scenarios_30) # 데이터 준비
-hist_30 <- plot_bf_histogram(results_30_tidy, "(N=30)") # 히스토그램 생성
-box_30 <- plot_bf_boxplot(results_30_tidy, "(N=30)") # 박스플롯 생성
+hist_30 <- plot_bf_histogram(results_30_tidy, "(N=30, Effect size = 0.5)") # 히스토그램 생성
+box_30 <- plot_bf_boxplot(results_30_tidy, "(N=30, Effect size = 0.8)") # 박스플롯 생성
 print(hist_30)
 print(box_30)
 # === results_100 ===
 results_100_tidy <- process_bf_data(results_100, scenarios_100) # 데이터 준비
-hist_100 <- plot_bf_histogram(results_100_tidy, "(N=100)") # 히스토그램 생성
-box_100 <- plot_bf_boxplot(results_100_tidy, "(N=100)") # 박스플롯 생성
+hist_100 <- plot_bf_histogram(results_100_tidy, "(N=100, Effect size = 0.5)") # 히스토그램 생성
+box_100 <- plot_bf_boxplot(results_100_tidy, "(N=100, Effect size = 0.8)") # 박스플롯 생성
 print(hist_100)
 print(box_100)
 
 # === results_200 ===
 results_200_tidy <- process_bf_data(results_200, scenarios_200)
-hist_200 <- plot_bf_histogram(results_200_tidy, "(N=200)")
-box_200 <- plot_bf_boxplot(results_200_tidy, "(N=200)")
+hist_200 <- plot_bf_histogram(results_200_tidy, "(N=200, Effect size = 0.5)")
+box_200 <- plot_bf_boxplot(results_200_tidy, "(N=200, Effect size = 0.8)")
 print(hist_200)
 print(box_200)
 
 # === 추가 분석: BF_jzs와 BF_gica의 비교 분석 ===
 
 # 방법별 요약 통계 계산
-summary_stats_30 <- results_30_tidy %>% # 표본 바꾸기
+summary_stats_200 <- results_200_tidy %>% # 표본 바꾸기
   group_by(scenario, method_short) %>%
   summarise(
     mean_log_BF = mean(log_BF),
@@ -223,33 +211,32 @@ summary_stats_30 <- results_30_tidy %>% # 표본 바꾸기
     .groups = "drop"
   )
 
-print(summary_stats_30)
+print(summary_stats_200)
 
 # 다른 방법: 로그 차이 사용 (log(BF_GICA) - log(BF_JZS))
 log_bf_diff <- function(results_df, scenarios_df, title) {
   # 로그 베이즈 인자 차이 계산 및 데이터 준비
   scatter_data <- results_df %>%
     mutate(
-      log_BF_gica = log(BF_gica),  # 로그 변환
-      log_BF_jzs = log(BF_jzs),    # 로그 변환
+      log_BF_gica = log10(BF_gica),  # 로그 변환
+      log_BF_jzs = log10(BF_jzs),    # 로그 변환
       log_bf_diff = log_BF_gica - log_BF_jzs  # 로그 BF 차이
     ) %>%
     left_join(scenarios_df, by = "scenario")
   
   # 시나리오별 산점도 생성
-  ggplot(scatter_data, aes(x = mean_diff, y = log_bf_diff)) +
+  ggplot(scatter_data, aes(x = -mean_diff, y = log_bf_diff)) +
     geom_point(alpha = 0.3, size = 0.8) +  # 점 투명도와 크기 설정
     geom_hline(yintercept = 0, linetype = "dashed", color = "red", linewidth = 0.6) +  # 차이 = 0 기준선
     #geom_smooth(method = "loess", color = "blue", se = FALSE, linewidth = 0.8) +  # LOESS 회귀선 추가
-    facet_wrap(~ scenario, scales = "free_y",  # 각 패널마다 y축 자유롭게 조정
+    facet_wrap(~ scenario, scales = "fixed",
                labeller = labeller(scenario = setNames(scatter_data$label[!duplicated(scatter_data$scenario)], 
                                                        unique(scatter_data$scenario))),
-               nrow = 2, ncol = 4) +  # 2행 4열 배치
+               nrow = 2, ncol = 3) +  # 2행 4열 배치
     labs(
       title = paste("로그 베이즈 인자 차이 (log(BF_GICA) - log(BF_JZS))", title),
-      x = "평균 차이 (Mean Difference)",
-      y = "log(BF) 차이 (GICA - JZS)",
-      caption = "Note: b = arithmetic effect size / pooled effect size"
+      x = "평균 차이 (mean1-mean2)",
+      y = "log(BF) 차이 (GICA - JZS)"
     ) +
     theme_paper() +
     theme(
@@ -262,9 +249,9 @@ log_bf_diff <- function(results_df, scenarios_df, title) {
 }
 
 # 로그 차이 산점도 생성 및 출력
-log_diff_30 <- log_bf_diff(results_30, scenarios_30, "(N=30)")
-log_diff_100 <- log_bf_diff(results_100, scenarios_100, "(N=100)")
-log_diff_200 <- log_bf_diff(results_200, scenarios_200, "(N=200)")
+log_diff_30 <- log_bf_diff(results_30, scenarios_30, "(N=30, Effect size = 0.8)")
+log_diff_100 <- log_bf_diff(results_100, scenarios_100, "(N=100, Effect size = 0.8)")
+log_diff_200 <- log_bf_diff(results_200, scenarios_200, "(N=200, Effect size = 0.8)")
 print(log_diff_30);print(log_diff_100);print(log_diff_200)
 
 # 시나리오별 평균 막대그래프 함수 정의 (y축 스케일 자유롭게)
@@ -286,17 +273,17 @@ plot_mean_bar <- function(bf_tidy, title) {
     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", linewidth = 0.5) +
     scale_fill_manual(values = method_colors, 
                       labels = bf_method_labels) +
-    facet_wrap(~ scenario, scales = "free_y",  # 각 패널마다 y축 자유롭게 조정
+    facet_wrap(~ scenario, scales = "fixed",  # 각 패널마다 y축 자유롭게 조정
                labeller = labeller(scenario = setNames(summary_stats$label[!duplicated(summary_stats$scenario)], 
                                                        unique(summary_stats$scenario))),
-               nrow = 2, ncol = 4) +  # 2행 4열 배치
+               nrow = 2, ncol = 3) +  # 2행 4열 배치
     labs(
       title = paste("시나리오별 평균 Log BF 비교", title),
       subtitle = "오차 막대는 표준 오차(SE)를 나타냄",
       x = "방법",
       y = "평균 log(BF)",
       fill = "방법",
-      caption = "Note: b = arithmetic effect size / pooled effect size"
+      caption = "Note : log_10을 취함"
     ) +
     theme_paper() +
     theme(
@@ -305,9 +292,9 @@ plot_mean_bar <- function(bf_tidy, title) {
       panel.spacing = unit(1, "lines")  # 패널 간격 조정
     )
 }
-mean_bar_30 <- plot_mean_bar(results_30_tidy, "(N=30)")
-mean_bar_100 <- plot_mean_bar(results_100_tidy, "(N=100)")
-mean_bar_200 <- plot_mean_bar(results_200_tidy, "(N=200)")
+mean_bar_30 <- plot_mean_bar(results_30_tidy, "(N=30, Effect size = 0.8)")
+mean_bar_100 <- plot_mean_bar(results_100_tidy, "(N=100, Effect size = 0.8)")
+mean_bar_200 <- plot_mean_bar(results_200_tidy, "(N=200, Effect size = 0.8)")
 # 그래프 출력
 print(mean_bar_30)
 print(mean_bar_100)
@@ -320,8 +307,8 @@ analyze_correlation <- function(results_df, scenarios_df, title) {
   corr_data <- results_df %>%
     select(scenario, BF_jzs, BF_gica, mean_diff) %>%
     mutate(
-      log_BF_jzs = log(BF_jzs),
-      log_BF_gica = log(BF_gica),
+      log_BF_jzs = log10(BF_jzs),
+      log_BF_gica = log10(BF_gica),
       abs_mean_diff = abs(mean_diff)
     ) %>%
     left_join(scenarios_df, by = "scenario")
@@ -356,12 +343,12 @@ analyze_correlation <- function(results_df, scenarios_df, title) {
       name = "|평균 차이(SMD)|"
     ) +
     # 각 시나리오별 패널 분리
-    facet_wrap(~ scenario, scales = "free",
+    facet_wrap(~ scenario, scales = "fixed",
                labeller = labeller(scenario = setNames(
                  corr_stats$label, 
                  corr_stats$scenario
                )),
-               nrow = 2, ncol = 4) +
+               nrow = 2, ncol = 3) +
     # 각 패널에 상관계수 표시
     geom_text(data = corr_stats,
               aes(label = sprintf("R² = %.3f", r_squared),
@@ -386,9 +373,9 @@ analyze_correlation <- function(results_df, scenarios_df, title) {
 }
 
 # 각 데이터셋에 대한 상관관계 분석 실행
-scatter_30 <- analyze_correlation(results_30, scenarios_30, "(N=30)")
-scatter_100 <- analyze_correlation(results_100, scenarios_100, "(N=100)")
-scatter_200 <- analyze_correlation(results_200, scenarios_200, "(N=200)")
+scatter_30 <- analyze_correlation(results_30, scenarios_30, "(N=30, Effect size = 0.8)")
+scatter_100 <- analyze_correlation(results_100, scenarios_100, "(N=100, Effect size = 0.8)")
+scatter_200 <- analyze_correlation(results_200, scenarios_200, "(N=200, Effect size = 0.8)")
 
 # 결과 출력
 print(scatter_30)

@@ -2,7 +2,7 @@ library(dplyr)
 library(purrr)
 
 home_dir <- "./New"
-output_dir <- "D:/resultsm2_30" #저장경로 수정하기
+output_dir <- "D:/resultsFin30ES8" #저장경로 수정하기
 
 # 안전한 추출 함수
 safe_extract <- function(x, default = NA) {
@@ -35,13 +35,13 @@ process_resultdsd <- function(temp_result) {
     BF_jzs = extract_bayes_factor(temp_result$bayes_factor),
     BF_gica = safe_extract(temp_result$gica$bf10),
     mean_diff = safe_extract(temp_result$gica$d),
-    sdr = safe_extract(temp_result$sdr),
+    varr = safe_extract(temp_result$varr),
     n1 = safe_extract(temp_result$n1),
     n2 = safe_extract(temp_result$n2),
     sd_x = sd_x,
-    sd_y = sd_y,
-    welch_p = safe_extract(temp_result$welch_p),
-    student_p = safe_extract(temp_result$student_p)
+    sd_y = sd_y #,
+    # welch_p = safe_extract(temp_result$welch_p),
+    # student_p = safe_extract(temp_result$student_p)
   )
 }
 # 모든 결과 파일 읽고 처리
@@ -55,6 +55,6 @@ results_df_dsd <- bind_rows(results)
 
 # 행 이름 제거
 rownames(results_df_dsd) <- NULL
-
+print(results_df_dsd)
 # 결과 저장
-saveRDS(results_df_dsd, file = file.path(home_dir, "merged_resultsm2_30.RDS"))
+saveRDS(results_df_dsd, file = file.path(home_dir, "mergedFin30ES8.RDS"))
