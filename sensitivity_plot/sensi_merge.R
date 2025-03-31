@@ -1,8 +1,8 @@
 library(dplyr)
 library(purrr)
 
-home_dir <- "./New"
-output_dir <- "D:/resultsFin200E8_r1" #저장경로 수정하기
+home_dir <- "./sensitivity_plot"
+output_dir <- "D:/sens5" #저장경로 수정하기
 
 # 안전한 추출 함수
 safe_extract <- function(x, default = NA) {
@@ -26,13 +26,15 @@ extract_bayes_factor <- function(bf_object) {
 ## 표준편차까지 계산
 process_resultdsd <- function(temp_result) {
   # 각 그룹의 표준편차 계산
-  data <- temp_result$bayes_factor@data
+  data <- temp_result$jzs_medium@data
   sd_x <- sd(data$y[data$group == "x"])
   sd_y <- sd(data$y[data$group == "y"])
   
   list(
     scenario = safe_extract(temp_result$scenario),
-    BF_jzs = extract_bayes_factor(temp_result$bayes_factor),
+    BF_jzsM = extract_bayes_factor(temp_result$jzs_medium),
+    BF_jzsW = extract_bayes_factor(temp_result$jzs_wide),
+    BF_jzsU = extract_bayes_factor(temp_result$jzs_ultrawide),
     BF_gica = safe_extract(temp_result$gica$bf10),
     mean_diff = safe_extract(temp_result$gica$d),
     varr = safe_extract(temp_result$varr),
@@ -57,4 +59,4 @@ results_df_dsd <- bind_rows(results)
 rownames(results_df_dsd) <- NULL
 print(results_df_dsd)
 # 결과 저장
-saveRDS(results_df_dsd, file = file.path(home_dir, "mergedFin200ES8_r1.RDS"))
+saveRDS(results_df_dsd, file = file.path(home_dir, "merged_seni5.RDS"))

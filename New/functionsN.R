@@ -23,7 +23,7 @@ mean_sd <- function(sd1, sd2) { #  모수 단위: 이분산 가정- 평균표준
 }
 
 pooled_sd <- function(sd1, sd2, n1, n2) { # Student
-  sqrt((n1*sd1^2 + n2*sd2^2) / (n1 + n2 - 2))
+  sqrt(((n1-1)*sd1^2 + (n2-1)*sd2^2) / (n1 + n2 - 2))
 }
 
 BeFi_sd <- function(sd1, sd2, n1, n2) { # Welch
@@ -72,10 +72,10 @@ empty_plot <- function() {
        xlim = c(0,1), ylim = c(0,1), mar = c(0,0,0,0))
 }
 
-# Giron and Castillo (2022)
+# Giron and Castillo (2021)
 library(pracma)
 
-gicaBF <- function(x1, x2) {
+BeFiBF <- function(x1, x2) {
   
   # Calculate sample statistics
   xbar1 <- mean(x1)

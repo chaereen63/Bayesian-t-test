@@ -1,4 +1,4 @@
-## 시각화
+## Visualization
 library(ggplot2)
 library(ggridges)
 library(dplyr)
@@ -7,27 +7,27 @@ home_dir <- "."
 source(file = file.path("./New/functionsN.R"))
 
 # Load all three RDS files
-results_30 <- readRDS("./New/mergedFin30ES8.RDS")
-results_100 <- readRDS("./New/mergedFin100ES8.RDS")
-results_200 <- readRDS("./New/mergedFin200ES8.RDS")
+results_50 <- readRDS("./New/mergedFin50ES0_r1.RDS")
+results_100 <- readRDS("./New/mergedFin100ES0_r1.RDS")
+results_200 <- readRDS("./New/mergedFin200ES0_r1.RDS")
 
-# 시나리오 정의 - sample size = 30인 경우
-scenarios_30 <- tibble(
+# Define scenarios - sample size = 30
+scenarios_50 <- tibble(
   scenario = 1:5,
-  n1 = c(15, 12, 15, 12, 18),
-  n2 = c(15, 18, 15, 18, 12),
+  n1 = c(25, 20, 25, 20, 30),
+  n2 = c(25, 30, 25, 30, 20),
   var1 = c(4, 4, 4, 4, 4),
   var2 = c(4, 4, 2, 2, 2)
 ) %>%
   mutate(
     varr = var2/var1,
     total_n = n1 + n2,
-    # 레이블에 b값 포함 (간결한 형식)
+    # Concise format for labels
     label = sprintf("n1=%d, n2=%d, VarR=%.1f", 
                     n1, n2, varr)
   )
 
-# 시나리오 정의 - sample size = 100인 경우
+# Define scenarios - sample size = 100
 scenarios_100 <- tibble(
   scenario = 1:5,
   n1 = c(50, 40, 50, 40, 60),
@@ -38,12 +38,12 @@ scenarios_100 <- tibble(
   mutate(
     varr = var2/var1,
     total_n = n1 + n2,
-    # 레이블에 b값 포함
+    # Include varr in label
     label = sprintf("n1=%d, n2=%d, VarR=%.1f", 
-                     n1, n2, varr)
+                    n1, n2, varr)
   )
 
-# 시나리오 정의 - sample size = 200인 경우
+# Define scenarios - sample size = 200
 scenarios_200 <- tibble(
   scenario = 1:5,
   n1 = c(100, 80, 100, 80, 120),
@@ -54,40 +54,40 @@ scenarios_200 <- tibble(
   mutate(
     varr = var2/var1,
     total_n = n1 + n2,
-    # 레이블에 b값 포함 (더 간결한 형식)
-    label = sprintf("n1=%d, n2=%d", 
+    # Concise format for labels
+    label = sprintf("n1=%d, n2=%d, VarR=%.1f", 
                     n1, n2, varr)
   )
-# 색상 팔레트와 레이블 정의
+# Define color palette and labels
 method_colors <- c(
   "jzs" = "turquoise3",
-  "gica" = "coral"
+  "BeFi" = "coral"
 )
 
-# 테두리 색상 정의 (약간 더 진한 색상)
+# Define border colors (slightly darker)
 method_border_colors <- c(
   "jzs" = "turquoise4",
-  "gica" = "coral4"
+  "BeFi" = "coral4"
 )
 
 bf_method_labels <- c(
   "jzs" = expression(BF[JZS]),
-  "gica" = expression(BF[GICA])
+  "BeFi" = expression(BF[BeFi])
 )
 
-# 공통 테마 설정
+# Common theme settings
 theme_paper <- function() {
   theme_minimal() +
     theme(
-      text = element_text(family = "Noto Sans KR", size = 12),
+      text = element_text(family = "Times New Roman", size = 12),
       axis.title = element_text(size = 12, face = "bold"),
       axis.text = element_text(size = 10),
-      strip.text = element_text(size = 10, face = "bold"),  # 패널 제목(시나리오 레이블) 크기 줄임
-      plot.title = element_text(size = 14, face = "bold"),  # 전체 그래프 제목 크기 줄임
+      strip.text = element_text(size = 10, face = "bold"),  # Reduced panel title size
+      plot.title = element_text(size = 14, face = "bold"),  # Reduced overall graph title size
       plot.subtitle = element_text(size = 9),
-      plot.caption = element_text(size = 11, hjust = 1, face = "italic"),  # 각주 크기 및 스타일
+      plot.caption = element_text(size = 11, hjust = 1, face = "italic"),  # Footnote size and style
       legend.position = "bottom",
-      legend.key.size = unit(1, "cm"),  # 범례 크기 증가
+      legend.key.size = unit(1, "cm"),  # Increased legend size
       legend.title = element_text(size = 11),
       legend.text = element_text(size = 10),
       panel.grid.major = element_line(color = "gray85", linewidth = 0.4),
@@ -100,42 +100,46 @@ theme_paper <- function() {
     )
 }
 
-# 데이터 가공 함수 정의
+# Data processing function
 process_bf_data <- function(results_df, scenarios_df) {
   results_tidy <- results_df %>%
-    # Log 변환 적용
+    # Apply log transformation
     mutate(
       log_BF_jzs = log10(BF_jzs),
       log_BF_gica = log10(BF_gica)
     ) %>%
-    # 그래프용 긴 형태로 변환
+    # Transform to long format for plotting
     pivot_longer(
       cols = c(log_BF_jzs, log_BF_gica),
       names_to = "method",
       values_to = "log_BF"
     ) %>%
-    # 방법 레이블 정리
+    # Clean up method labels - change gica to BeFi here
     mutate(
-      method_short = gsub("log_BF_", "", method)
+      method_short = case_when(
+        method == "log_BF_gica" ~ "BeFi",
+        method == "log_BF_jzs" ~ "jzs",
+        TRUE ~ gsub("log_BF_", "", method)
+      )
     ) %>%
-    # 시나리오 정보 추가
+    # Add scenario information
     left_join(scenarios_df, by = "scenario")
   
   return(results_tidy)
 }
 
-# 빈도분포 히스토그램 함수 정의
+# Frequency distribution histogram function
 plot_bf_histogram <- function(bf_tidy, title) {
-  # 각 시나리오별로 분리하여 히스토그램 생성
+  # Create histogram separated by scenario
   ggplot(bf_tidy, aes(x = log_BF, fill = method_short)) +
-    # 히스토그램의 투명도를 0.5로 낮추고 테두리 추가
+    # Lower histogram transparency to 0.5 and add borders
     geom_histogram(aes(y = after_stat(density)), 
                    alpha = 0.5, 
                    position = "identity",
                    bins = 30,
-                   color = "white",  # 히스토그램 사이 경계선을 흰색으로
+                   color = "white",  # White boundaries between histograms
                    linewidth = 0.2) +
-    # 밀도 곡선의 투명도를 0.7로 올리고 선 두께를 1.2로 증가
+    # Increase density curve transparency to 0.7 and line thickness to 1.2
     geom_density(aes(color = method_short), 
                  alpha = 0.7,
                  linewidth = 1.2) +
@@ -145,20 +149,19 @@ plot_bf_histogram <- function(bf_tidy, title) {
                                                        unique(bf_tidy$scenario)))) +
     scale_fill_manual(values = method_colors, 
                       labels = bf_method_labels) +
-    scale_color_manual(values = method_border_colors,  # 더 진한 테두리 색상 사용
+    scale_color_manual(values = method_border_colors,  # Use darker border colors
                        labels = bf_method_labels) +
     labs(
-      title = paste("로그 베이즈 인자 분포", title),
+      title = paste("Log Bayes Factor Distribution", title),
       x = "log(BF)",
-      y = "밀도",
-      fill = "방법",
-      color = "방법"#,
-      #caption = "Note: "  # 각주 추가
+      y = "Density",
+      fill = "Method",
+      color = "Method"
     ) +
     theme_paper()
 }
 
-# 박스플롯 함수 정의
+# Boxplot function
 plot_bf_boxplot <- function(bf_tidy, title) {
   ggplot(bf_tidy, aes(x = factor(scenario), y = log_BF, fill = method_short)) +
     geom_boxplot(position = position_dodge(width = 0.8), alpha = 0.8) +
@@ -166,10 +169,10 @@ plot_bf_boxplot <- function(bf_tidy, title) {
                       labels = bf_method_labels) +
     scale_x_discrete(labels = bf_tidy$label[!duplicated(bf_tidy$scenario)]) +
     labs(
-      title = paste("시나리오별 Log BF 비교", title),
-      x = "시나리오",
+      title = paste("Log BF Box plot by Scenario", title),
+      x = "Scenario",
       y = "log(BF)",
-      fill = "방법"
+      fill = "Method"
     ) +
     theme_paper() +
     theme(
@@ -177,30 +180,29 @@ plot_bf_boxplot <- function(bf_tidy, title) {
     )
 }
 
-# === results_30 ===
-results_30_tidy <- process_bf_data(results_30, scenarios_30) # 데이터 준비
-hist_30 <- plot_bf_histogram(results_30_tidy, "(N=30, Effect size = 0.5)") # 히스토그램 생성
-box_30 <- plot_bf_boxplot(results_30_tidy, "(N=30, Effect size = 0.8)") # 박스플롯 생성
-print(hist_30)
-print(box_30)
+# === results_50 ===
+results_50_tidy <- process_bf_data(results_50, scenarios_50) # Prepare data
+hist_50 <- plot_bf_histogram(results_50_tidy, "(Total N=50, Effect size = 0.5)") # Create histogram
+box_50 <- plot_bf_boxplot(results_50_tidy, "(Total N=50, Effect size = 0.5)") # Create boxplot
+print(hist_50)
+print(box_50)
 # === results_100 ===
-results_100_tidy <- process_bf_data(results_100, scenarios_100) # 데이터 준비
-hist_100 <- plot_bf_histogram(results_100_tidy, "(N=100, Effect size = 0.5)") # 히스토그램 생성
-box_100 <- plot_bf_boxplot(results_100_tidy, "(N=100, Effect size = 0.8)") # 박스플롯 생성
+results_100_tidy <- process_bf_data(results_100, scenarios_100) # Prepare data
+hist_100 <- plot_bf_histogram(results_100_tidy, "(Total N=100, Effect size = 0.5)") # Create histogram
+box_100 <- plot_bf_boxplot(results_100_tidy, "(Total N=100, Effect size = 0.5)") # Create boxplot
 print(hist_100)
 print(box_100)
-
 # === results_200 ===
 results_200_tidy <- process_bf_data(results_200, scenarios_200)
-hist_200 <- plot_bf_histogram(results_200_tidy, "(N=200, Effect size = 0.5)")
-box_200 <- plot_bf_boxplot(results_200_tidy, "(N=200, Effect size = 0.8)")
+hist_200 <- plot_bf_histogram(results_200_tidy, "(Total N=200, Effect size = 0.5)")
+box_200 <- plot_bf_boxplot(results_200_tidy, "(Total N=200, Effect size = 0.5)")
 print(hist_200)
 print(box_200)
 
-# === 추가 분석: BF_jzs와 BF_gica의 비교 분석 ===
+# === Additional Analysis: Comparison of BF_jzs and BF_gica ===
 
-# 방법별 요약 통계 계산
-summary_stats_200 <- results_200_tidy %>% # 표본 바꾸기
+# Calculate summary statistics by method
+summary_stats_50 <- results_50_tidy %>% # Change sample if needed
   group_by(scenario, method_short) %>%
   summarise(
     mean_log_BF = mean(log_BF),
@@ -211,36 +213,36 @@ summary_stats_200 <- results_200_tidy %>% # 표본 바꾸기
     .groups = "drop"
   )
 
-print(summary_stats_200)
+print(summary_stats_50)
 
-# 다른 방법: 로그 차이 사용 (log(BF_GICA) - log(BF_JZS))
+# Alternative approach: Using log differences (log(BF_JZS) - log(BF_BeFi))
 log_bf_diff <- function(results_df, scenarios_df, title) {
-  # 로그 베이즈 인자 차이 계산 및 데이터 준비
+  # Calculate log Bayes factor differences and prepare data
   scatter_data <- results_df %>%
     mutate(
-      log_BF_gica = log10(BF_gica),  # 로그 변환
-      log_BF_jzs = log10(BF_jzs),    # 로그 변환
-      log_bf_diff = log_BF_gica - log_BF_jzs  # 로그 BF 차이
+      log_BF_gica = log10(BF_gica),  # Log transformation
+      log_BF_jzs = log10(BF_jzs),    # Log transformation
+      log_bf_diff = log_BF_jzs - log_BF_gica  # Log BF difference
     ) %>%
     left_join(scenarios_df, by = "scenario")
   
-  # 시나리오별 산점도 생성
+  # Create scatter plot by scenario
   ggplot(scatter_data, aes(x = -mean_diff, y = log_bf_diff)) +
-    geom_point(alpha = 0.3, size = 0.8) +  # 점 투명도와 크기 설정
-    geom_hline(yintercept = 0, linetype = "dashed", color = "red", linewidth = 0.6) +  # 차이 = 0 기준선
-    #geom_smooth(method = "loess", color = "blue", se = FALSE, linewidth = 0.8) +  # LOESS 회귀선 추가
+    geom_point(alpha = 0.3, size = 0.8) +  # Set point transparency and size
+    geom_hline(yintercept = 0, linetype = "dashed", color = "red", linewidth = 0.6) +  # Reference line for difference = 0
+    #geom_smooth(method = "loess", color = "blue", se = FALSE, linewidth = 0.8) +  # LOESS regression line
     facet_wrap(~ scenario, scales = "fixed",
                labeller = labeller(scenario = setNames(scatter_data$label[!duplicated(scatter_data$scenario)], 
                                                        unique(scatter_data$scenario))),
-               nrow = 2, ncol = 3) +  # 2행 4열 배치
+               nrow = 2, ncol = 3) +  # 2 rows, 3 columns layout
     labs(
-      title = paste("로그 베이즈 인자 차이 (log(BF_GICA) - log(BF_JZS))", title),
-      x = "평균 차이 (mean1-mean2)",
-      y = "log(BF) 차이 (GICA - JZS)"
+      title = paste("Log Bayes Factor Difference (log(BF_JZS) - log(BF_BeFi))", title),
+      x = "Mean Difference (mean1-mean2)",
+      y = "Log(BF) Difference (JZS - BeFi)"
     ) +
     theme_paper() +
     theme(
-      aspect.ratio = 0.6,  # 가로세로 비율
+      aspect.ratio = 0.6,  # Aspect ratio
       panel.grid.major = element_line(color = "gray90"),
       panel.grid.minor = element_line(color = "gray95"),
       strip.text = element_text(size = 9, margin = margin(b = 5)),
@@ -248,15 +250,15 @@ log_bf_diff <- function(results_df, scenarios_df, title) {
     )
 }
 
-# 로그 차이 산점도 생성 및 출력
-log_diff_30 <- log_bf_diff(results_30, scenarios_30, "(N=30, Effect size = 0.8)")
-log_diff_100 <- log_bf_diff(results_100, scenarios_100, "(N=100, Effect size = 0.8)")
-log_diff_200 <- log_bf_diff(results_200, scenarios_200, "(N=200, Effect size = 0.8)")
-print(log_diff_30);print(log_diff_100);print(log_diff_200)
+# Create and print log difference scatter plots
+log_diff_50 <- log_bf_diff(results_50, scenarios_50, "(Total N=50, Effect size = 0.5)")
+log_diff_100 <- log_bf_diff(results_100, scenarios_100, "(Total N=100, Effect size = 0.5)")
+log_diff_200 <- log_bf_diff(results_200, scenarios_200, "(Total N=200, Effect size = 0.5)")
+print(log_diff_50);print(log_diff_100);print(log_diff_200)
 
-# 시나리오별 평균 막대그래프 함수 정의 (y축 스케일 자유롭게)
+# Define mean bar graph function by scenario (free y-axis scale)
 plot_mean_bar <- function(bf_tidy, title) {
-  # 시나리오별, 방법별 로그 BF 평균값 계산
+  # Calculate average log BF values by scenario and method
   summary_stats <- bf_tidy %>%
     group_by(scenario, method_short, label) %>%
     summarise(
@@ -265,7 +267,7 @@ plot_mean_bar <- function(bf_tidy, title) {
       .groups = "drop"
     )
   
-  # 시나리오를 개별 패널로 나누어 그래프 생성 (y축 스케일 자유롭게)
+  # Create graph dividing scenarios into individual panels (free y-axis scale)
   ggplot(summary_stats, aes(x = method_short, y = mean_log_BF, fill = method_short)) +
     geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7, alpha = 0.8) +
     geom_errorbar(aes(ymin = mean_log_BF - se_log_BF, ymax = mean_log_BF + se_log_BF),
@@ -273,37 +275,37 @@ plot_mean_bar <- function(bf_tidy, title) {
     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", linewidth = 0.5) +
     scale_fill_manual(values = method_colors, 
                       labels = bf_method_labels) +
-    facet_wrap(~ scenario, scales = "fixed",  # 각 패널마다 y축 자유롭게 조정
+    facet_wrap(~ scenario, scales = "fixed",  # Adjust y-axis freely for each panel
                labeller = labeller(scenario = setNames(summary_stats$label[!duplicated(summary_stats$scenario)], 
                                                        unique(summary_stats$scenario))),
-               nrow = 2, ncol = 3) +  # 2행 4열 배치
+               nrow = 2, ncol = 3) +  # 2 rows, 3 columns layout
     labs(
-      title = paste("시나리오별 평균 Log BF 비교", title),
-      subtitle = "오차 막대는 표준 오차(SE)를 나타냄",
-      x = "방법",
-      y = "평균 log(BF)",
-      fill = "방법",
-      caption = "Note : log_10을 취함"
+      title = paste("Mean Log BF Comparison by Scenario", title),
+      subtitle = "Error bars represent standard error (SE)",
+      x = "Method",
+      y = "Mean log(BF)",
+      fill = "Method",
+      caption = "Note: log base 10 is used"
     ) +
     theme_paper() +
     theme(
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),  # x축 텍스트 정렬 조정
-      strip.text = element_text(size = 9),  # 패널 제목 크기 조정
-      panel.spacing = unit(1, "lines")  # 패널 간격 조정
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),  # Adjust x-axis text alignment
+      strip.text = element_text(size = 9),  # Adjust panel title size
+      panel.spacing = unit(1, "lines")  # Adjust panel spacing
     )
 }
-mean_bar_30 <- plot_mean_bar(results_30_tidy, "(N=30, Effect size = 0.8)")
-mean_bar_100 <- plot_mean_bar(results_100_tidy, "(N=100, Effect size = 0.8)")
-mean_bar_200 <- plot_mean_bar(results_200_tidy, "(N=200, Effect size = 0.8)")
-# 그래프 출력
-print(mean_bar_30)
+mean_bar_50 <- plot_mean_bar(results_50_tidy, "(Total N=50, Effect size = 0.5)")
+mean_bar_100 <- plot_mean_bar(results_100_tidy, "(Total N=100, Effect size = 0.5)")
+mean_bar_200 <- plot_mean_bar(results_200_tidy, "(Total N=200, Effect size = 0.5)")
+# Output graphs
+print(mean_bar_50)
 print(mean_bar_100)
 print(mean_bar_200)
 
-#### 아래부터는 심심해서 해본 그림 그리기 ####
-# 시나리오별 BF_jzs와 BF_gica 간의 상관관계 분석 함수 (파랑-노랑-빨강 색상 대비)
+#### Additional visualization experiments below ####
+# Correlation analysis function by scenario for BF_jzs and BF_gica (blue-yellow-red color contrast)
 analyze_correlation <- function(results_df, scenarios_df, title) {
-  # 데이터 준비
+  # Data preparation
   corr_data <- results_df %>%
     select(scenario, BF_jzs, BF_gica, mean_diff) %>%
     mutate(
@@ -313,10 +315,10 @@ analyze_correlation <- function(results_df, scenarios_df, title) {
     ) %>%
     left_join(scenarios_df, by = "scenario")
   
-  # 절댓값 범위 확인
+  # Check absolute value range
   max_abs_diff <- max(corr_data$abs_mean_diff, na.rm = TRUE)
   
-  # 시나리오별 상관계수 계산
+  # Calculate correlation coefficients by scenario
   corr_stats <- corr_data %>%
     group_by(scenario) %>%
     summarise(
@@ -327,40 +329,40 @@ analyze_correlation <- function(results_df, scenarios_df, title) {
       .groups = "drop"
     )
   
-  # 산점도 생성 - 파랑-노랑-빨강 색상 대비
+  # Create scatter plot - blue-yellow-red color contrast
   scatter_plot <- ggplot(corr_data, aes(x = log_BF_jzs, y = log_BF_gica)) +
-    # 점 색상을 abs_mean_diff에 따라 설정
+    # Set point color according to abs_mean_diff
     geom_point(aes(color = abs_mean_diff), alpha = 0.7, size = 1.2) +
-    # 1:1 선 연한 회색으로 표시
+    # Show 1:1 line in light gray
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray70", linewidth = 0.5) +
-    # 색상 스케일 설정 - 파랑-노랑-빨강 대비
+    # Set color scale - blue-yellow-red contrast
     scale_color_gradientn(
       colors = c("darkblue", "blue", "royalblue", "skyblue", 
                  "yellow", 
                  "orange", "red", "darkred"),
       values = scales::rescale(c(0, max_abs_diff*0.2, max_abs_diff*0.3, max_abs_diff*0.4, 
                                  max_abs_diff*0.5, max_abs_diff*0.6, max_abs_diff*0.8, max_abs_diff)),
-      name = "|평균 차이(SMD)|"
+      name = "|Mean Diff (SMD)|"
     ) +
-    # 각 시나리오별 패널 분리
+    # Separate by scenario in panels
     facet_wrap(~ scenario, scales = "fixed",
                labeller = labeller(scenario = setNames(
                  corr_stats$label, 
                  corr_stats$scenario
                )),
                nrow = 2, ncol = 3) +
-    # 각 패널에 상관계수 표시
+    # Display correlation coefficient in each panel
     geom_text(data = corr_stats,
               aes(label = sprintf("R² = %.3f", r_squared),
                   x = -Inf, y = Inf),
               hjust = -0.1, vjust = 1.2, size = 3) +
-    # 그래프 제목 및 축 레이블
+    # Graph title and axis labels
     labs(
-      title = paste("Log BF 방법 간 상관관계", title),
-      subtitle = "점선: 1:1 일치선, 점 색상: 평균 차이의 절댓값(|SMD|)",
+      title = paste("Correlation Between Log BF Methods", title),
+      subtitle = "Dashed line: 1:1 line, Point color: Absolute mean difference (|SMD|)",
       x = expression(log(BF[JZS])),
-      y = expression(log(BF[GICA])),
-      caption = "Note: R² = 결정계수"
+      y = expression(log(BF[BeFi])),
+      caption = "Note: R² = coefficient of determination"
     ) +
     theme_paper() +
     theme(
@@ -372,12 +374,12 @@ analyze_correlation <- function(results_df, scenarios_df, title) {
   return(scatter_plot)
 }
 
-# 각 데이터셋에 대한 상관관계 분석 실행
+# Run correlation analysis for each dataset
 scatter_30 <- analyze_correlation(results_30, scenarios_30, "(N=30, Effect size = 0.8)")
 scatter_100 <- analyze_correlation(results_100, scenarios_100, "(N=100, Effect size = 0.8)")
 scatter_200 <- analyze_correlation(results_200, scenarios_200, "(N=200, Effect size = 0.8)")
 
-# 결과 출력
+# Output results
 print(scatter_30)
 print(scatter_100)
 print(scatter_200)
