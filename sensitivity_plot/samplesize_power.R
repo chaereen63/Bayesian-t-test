@@ -232,6 +232,7 @@ crossing_points$y_offset[crossing_points$Method == "JZS (r=1/√2)"] <- 0.03
 # 공식: N = 2 * (1.96 + 0.84)^2 / d^2, 여기서 d = (mu1 - mu2) / sd = 0.4 / 2 = 0.2
 p_05_power80_n <- 2 * (1.96 + 0.84)^2 * 4 / 0.4^2
 
+desaturate(c("#00366C", "#4682B4", "#F2A900"))
 # 그래프 생성
 plot <- ggplot(plot_data, aes(x = N, y = log10BF, color = Method, linetype = Method)) +
   geom_line(size = 1) +
@@ -241,9 +242,9 @@ plot <- ggplot(plot_data, aes(x = N, y = log10BF, color = Method, linetype = Met
     y = "log10(BF10)"
   ) +
   theme_minimal() +
-  scale_color_manual(values = c("salmon", "#18392B", "#1B7D4F")) +
-  geom_hline(yintercept = 1, linetype = "dashed", color = "darkgray") +  # BF = 10 (substantial evidence)
-  geom_hline(yintercept = 0.5, linetype = "dashed", color = "darkgray") +  # BF = 3.16 (moderate evidence)
+  scale_color_manual(values = c("#F2A900", "#00366C", "#4682B4")) +
+  #geom_hline(yintercept = 1, color = "darkgray") +  # BF = 10 (substantial evidence)
+  #geom_hline(yintercept = 0.5, color = "darkgray") +  # BF = 3.16 (moderate evidence)
   geom_hline(yintercept = 0, color = "black") +  # BF = 1 (no evidence)
   scale_x_continuous(breaks = seq(50, 1000, by = 100)) +  # x축 눈금을 100 단위로 설정
   
@@ -257,12 +258,12 @@ plot <- ggplot(plot_data, aes(x = N, y = log10BF, color = Method, linetype = Met
             hjust = 0.5, vjust = 0.5) +
   
   # p < 0.05, 80% power 지점 표시
-  geom_vline(xintercept = p_05_power80_n, linetype = "dotted", color = "darkviolet", size = 0.7) +
+  geom_vline(xintercept = p_05_power80_n, linetype = "dotted", color = "#808080", size = 0.7) +
   
   # p < 0.05, 80% power 텍스트 추가
-  annotate("text", x = p_05_power80_n-1.2, y = 0.95, 
+  annotate("text", x = p_05_power80_n-10, y = 0.95, 
            label = paste0("t-test p<.05 (80% power): N = ", round(p_05_power80_n)),
-           color = "darkviolet", angle = 90, hjust = 1, vjust = -0.2, size = 3.5) +
+           color = "#808080", angle = 90, hjust = 1, vjust = -0.2, size = 3.5) +
   
   theme(
     legend.position = "bottom",

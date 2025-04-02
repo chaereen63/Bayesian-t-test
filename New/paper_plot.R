@@ -6,10 +6,10 @@ library(grid)
 library(gridExtra)
 
 # 효과크기별 결과 파일 로드
-results_100_es8 <- readRDS("./New/mergedFin50ES8_r1.RDS")  # 효과크기 0.8
-results_100_es5 <- readRDS("./New/mergedFin50ES5_r1.RDS")  # 효과크기 0.5
-results_100_es2 <- readRDS("./New/mergedFin50ES2_r1.RDS")  # 효과크기 0.2
-results_100_es0 <- readRDS("./New/mergedFin50ES0_r1.RDS")  # 효과크기 0.0
+results_100_es8 <- readRDS("./New/mergedFin200ES8_r1.RDS")  # 효과크기 0.8
+results_100_es5 <- readRDS("./New/mergedFin200ES5_r1.RDS")  # 효과크기 0.5
+results_100_es2 <- readRDS("./New/mergedFin200ES2_r1.RDS")  # 효과크기 0.2
+results_100_es0 <- readRDS("./New/mergedFin200ES0_r1.RDS")  # 효과크기 0.0
 
 # 시나리오 정의 - sample size = 50인 경우
 scenarios_50 <- tibble(
@@ -58,8 +58,8 @@ scenarios_200 <- tibble(
   )
 # 색상 팔레트와 레이블 정의
 method_colors <- c(
-  "jzs" = "#18392B",
-  "gica" = "coral"
+  "jzs" = "#00366C",
+  "gica" = "#F2A900"
 )
 
 bf_method_labels <- c(
@@ -118,7 +118,7 @@ process_bf_data <- function(results_df, scenarios_df) {
 # 시나리오별 평균 막대그래프 함수 정의
 create_plot <- function(results_df, title, is_left_column = FALSE, add_y_axis = FALSE, y_limits = NULL) {
   # 데이터 준비
-  bf_tidy <- process_bf_data(results_df, scenarios_50)
+  bf_tidy <- process_bf_data(results_df, scenarios_200)
   
   # 시나리오별, 방법별 로그 BF 평균값 계산
   summary_stats <- bf_tidy %>%
@@ -176,11 +176,11 @@ create_plot <- function(results_df, title, is_left_column = FALSE, add_y_axis = 
 
 # y축 범위 설정
 # 효과 크기 0.8 그룹의 y축 범위
-es_0_8_y_limits <- c(0, 1.25)
+es_0_8_y_limits <- c(0, 7) # 50: 1.25, 100: 2.7, 200: 7
 # 효과 크기 0.5 그룹의 y축 범위 - 값이 더 작아 패턴이 잘 보이도록 범위 좁힘
-es_0_5_y_limits <- c(0, 0.3)
+es_0_5_y_limits <- c(0, 2) # 50: 0.3, 100: 0.8, 200: 2
 # 효과 크기 0.2 및 0.0 그룹의 y축 범위
-negative_y_limits <- c(-0.6, 0)
+negative_y_limits <- c(-0.8, 0) # 50: -0.6, 100: -0.7, 200: -0.8
 
 # 4개 그래프 생성 - 효과 크기별로 적절한 y축 범위 적용
 p1 <- create_plot(results_100_es0, "(A) Effect size = 0.0", FALSE, y_limits = negative_y_limits)
@@ -254,4 +254,4 @@ final_plot_with_y_label <- add_shared_y_label(final_plot_with_label)
 print(final_plot_with_y_label)
 
 # 최종 그래프 저장
-ggsave("combined_plot_n50r1_final.png", final_plot_with_y_label, width = 23, height = 14, dpi = 600, units = "cm")
+ggsave("combined_plot_n200r1_final.png", final_plot_with_y_label, width = 23, height = 14, dpi = 600, units = "cm")

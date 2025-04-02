@@ -16,7 +16,7 @@ head(results_0)
 nrow(results_0)
 
 # 데이터 재구성 (long format으로 변환)
-results_long <- results_5 %>%
+results_long <- results_0 %>%
   pivot_longer(
     cols = starts_with("BF_"),
     names_to = "scale",
@@ -54,30 +54,30 @@ total <- ggplot() +
   # geom_bar(data = results_jzs_mean, 
   #          aes(x = scale, y = mean_logBF),
   #          fill = "turquoise4", stat = "identity", alpha = 0.7, width = 0.6) +
-  
   # JZS 평균값을 이은 선
   geom_line(data = results_jzs_mean,
             aes(x = scale, y = mean_logBF, group = 1),
-            color = "#1B7D4F", size = 0.8) +
+            color = "#00366C", size = 0.8) +
   
   # JZS 평균값 포인트
   geom_point(data = results_jzs_mean,
              aes(x = scale, y = mean_logBF),
-             color = "#1B7D4F", size = 1) +
+             color = "#00366C", size = 1) +
   
   # BeFi 가로선
   geom_hline(yintercept = befi_mean, linetype = "dashed", 
-             color = "coral", size = 0.8) +
+             color = "#F2A900", size = 0.8) +
   
   # BeFi 선 레이블
   annotate("text", x = 3, y = befi_mean + 0.01, 
-           label = "BeFi", color = "coral", family = "Times New Roman", size = 3) +
+           label = "BeFi", color = "#F2A900", family = "Times New Roman", size = 3) +
   
   # 그래프 제목 및 축 레이블 - 영어로 변경
   labs(title = "Comparison of log Bayes Factor Means by Scale",
-       subtitle = "JZS (bars) vs BeFi (line)",
+       subtitle = "JZS (line) vs BeFi (dashed line)",
        x = "r-scale",
-       y = "log(BF) Mean") +
+       y = "log(BF) Mean",
+       caption = "Note: log10 scale; Cohen's d = 0") +
   
   # 테마 설정
   theme_minimal() +
@@ -85,10 +85,11 @@ total <- ggplot() +
     legend.position = "none",  # 범례 제거 (모두 같은 색이므로)
     plot.title = element_text(face = "bold", hjust = 0.5, family = "Times New Roman", size = 10),
     plot.subtitle = element_text(hjust = 0.5, family = "Times New Roman", size = 9),
-    axis.title = element_text(face = "bold", family = "Times New Roman", size = 9)
+    axis.title = element_text(face = "bold", family = "Times New Roman", size = 9),
+    plot.caption = element_text(hjust = 1, face = "italic", family = "Times New Roman", size = 8)
   )
 print(total)
-ggsave("total_sensitivity5.png", plot = total, width = 10, height = 7, units = "cm")
+ggsave("total_sensitivity0.png", plot = total, width = 12, height = 9, units = "cm")
 
 #### 표본크기 별로 ####
 # 데이터 재구성 (long format으로 변환) 및 표본 크기 합 계산
