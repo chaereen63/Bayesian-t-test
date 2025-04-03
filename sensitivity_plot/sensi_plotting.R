@@ -16,7 +16,7 @@ head(results_0)
 nrow(results_0)
 
 # 데이터 재구성 (long format으로 변환)
-results_long <- results_0 %>%
+results_long <- results_5 %>%
   pivot_longer(
     cols = starts_with("BF_"),
     names_to = "scale",
@@ -133,8 +133,8 @@ results_jzs_mean <- results_mean %>%
   filter(scale != "BeFi")
 
 # 색상 정의
-befi_color <- "coral"  # 살구색/코랄
-jzs_color <- "#1B7D4F"   # 청록색
+befi_color <- "#F2A900"  # 살구색/코랄
+jzs_color <- "#00366C"   # 청록색
 
 # 그래프 생성
 plot <- ggplot() +
