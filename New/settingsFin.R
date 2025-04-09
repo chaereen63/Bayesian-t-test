@@ -34,11 +34,11 @@ create_settings <- function(var1, var2, effect_size, n1, n2, replications = 500)
 }
 
 # 각 시나리오 설정 생성 effect size = {0, 0.2, 0.5, 0.8}
-set1 <- create_settings(var1 = 4, var2 = 4, effect_size = 0.8, n1 = 25, n2 = 25, replications = 500)
-set2 <- create_settings(var1 = 4, var2 = 4, effect_size = 0.8, n1 = 20, n2 = 30, replications = 500)
-set3 <- create_settings(var1 = 4, var2 = 2, effect_size = 0.8, n1 = 25, n2 = 25, replications = 500)
-set4 <- create_settings(var1 = 4, var2 = 2, effect_size = 0.8, n1 = 20, n2 = 30, replications = 500)
-set5 <- create_settings(var1 = 4, var2 = 2, effect_size = 0.8, n1 = 30, n2 = 20, replications = 500)
+set1 <- create_settings(var1 = 4, var2 = 4, effect_size = 0.2, n1 = 300, n2 = 300, replications = 500)
+set2 <- create_settings(var1 = 4, var2 = 4, effect_size = 0.2, n1 = 240, n2 = 360, replications = 500)
+set3 <- create_settings(var1 = 4, var2 = 2, effect_size = 0.2, n1 = 300, n2 = 300, replications = 500)
+set4 <- create_settings(var1 = 4, var2 = 2, effect_size = 0.2, n1 = 240, n2 = 360, replications = 500)
+set5 <- create_settings(var1 = 4, var2 = 2, effect_size = 0.2, n1 = 360, n2 = 240, replications = 500)
 
 # 시나리오 번호 추가하고 합치기
 set1 <- set1 %>% mutate(scenario = 1)
@@ -73,4 +73,4 @@ scenario_stats <- all_settings %>%
 print(scenario_stats)
 
 # 저장
-saveRDS(all_settings, file = "New/set_Fin50ES8.RDS")
+saveRDS(all_settings, file = "New/addset600ES2.RDS")

@@ -9,7 +9,7 @@ source(file = file.path("./New/functionsN.R"))
 
 # Load all three RDS files
 results_50 <- readRDS("./New/mergedFin50ES8_r1.RDS")
-results_100 <- readRDS("./New/mergedFin100ES8_r1.RDS")
+results_100 <- readRDS("./New/robust_merge100E5_r1.RDS")
 results_200 <- readRDS("./New/mergedFin200ES8_r1.RDS")
 
 # Define scenarios - sample size = 50
@@ -60,7 +60,7 @@ scenarios_200 <- tibble(
 # Define color palette and labels
 method_colors <- c(
   "jzs" = "#00366C",
-  "BeFi" = "#F2A900"
+  "BFGC" = "#F2A900"
 )
 # 명도 확인
 #library(colorspace)
@@ -68,13 +68,13 @@ method_colors <- c(
 
 # Define border colors (slightly darker)
 method_border_colors <- c(
-  "jzs" = "turquoise4",
-  "BeFi" = "coral4"
+  "jzs" = "#00355C",
+  "BFGC" = "#F2A903"
 )
 
 bf_method_labels <- c(
   "jzs" = expression(BF[JZS]),
-  "BeFi" = expression(BF[BeFi])
+  "BFGC" = expression(BF[BFGC])
 )
 
 # Common theme settings - 논문에 맞게 폰트 사이즈 축소
@@ -119,7 +119,7 @@ process_bf_data <- function(results_df, scenarios_df) {
     # Clean up method labels - change gica to BeFi here
     mutate(
       method_short = case_when(
-        method == "log_BF_gica" ~ "BeFi",
+        method == "log_BF_gica" ~ "BFGC",
         method == "log_BF_jzs" ~ "jzs",
         TRUE ~ gsub("log_BF_", "", method)
       )
@@ -169,8 +169,6 @@ plot_bf_boxplot <- function(bf_tidy, title) {
     scale_fill_manual(values = method_colors, 
                       labels = bf_method_labels) +
     scale_x_discrete(labels = bf_tidy$label[!duplicated(bf_tidy$scenario)]) +
-    # y축 범위 고정
-    scale_y_continuous(limits = c(-1, 15)) +
     labs(
       title = paste("Log BF Box plot by Scenario", title),
       x = "Scenario",
@@ -203,9 +201,9 @@ log_bf_diff <- function(results_df, scenarios_df, title) {
                                                        unique(scatter_data$scenario))),
                nrow = 2, ncol = 3) +
     labs(
-      title = paste("Log Bayes Factor Difference (log(BF_JZS) - log(BF_BeFi))", title),
+      title = paste("Log Bayes Factor Difference (log(BF_JZS) - log(BF_BFGC))", title),
       x = "Mean Difference (mean1-mean2)",
-      y = "Log(BF) Difference (JZS - BeFi)"
+      y = "Log(BF) Difference (JZS - BFGC)"
     ) +
     theme_paper() +
     theme(
@@ -270,17 +268,17 @@ save_plot <- function(filename, plot, width = 13, height = 8, dpi = 600, units =
 
 # Boxplot 생성 및 저장
 box_50 <- plot_bf_boxplot(results_50_tidy, "(Total N=50, Effect size = 0.8)")
-box_100 <- plot_bf_boxplot(results_100_tidy, "(Total N=100, Effect size = 0.8)")
+box_100 <- plot_bf_boxplot(results_100_tidy, "(Total N=100, Effect size = 0.5)")
 box_200 <- plot_bf_boxplot(results_200_tidy, "(Total N=200, Effect size = 0.8)")
 
-save_plot("boxplot_50_8fixed.png", box_50)
-save_plot("boxplot_100_8fixed.png", box_100)
-save_plot("boxplot_200_8fixed.png", box_200)
+save_plot("boxplot_50E8.png", box_50)
+save_plot("robustboxplot_100E5.png", box_100)
+save_plot("boxplot_200E8.png", box_200)
 
 # 로그 차이 산점도 생성 및 저장
-log_diff_50 <- log_bf_diff(results_50, scenarios_50, "(Total N=50, Effect size = 0)")
-log_diff_100 <- log_bf_diff(results_100, scenarios_100, "(Total N=100, Effect size = 0)")
-log_diff_200 <- log_bf_diff(results_200, scenarios_200, "(Total N=200, Effect size = 0)")
+log_diff_50 <- log_bf_diff(results_50, scenarios_50, "(Total N=50, Effect size = 0.8)")
+log_diff_100 <- log_bf_diff(results_100, scenarios_100, "(Total N=100, Effect size = 0.8)")
+log_diff_200 <- log_bf_diff(results_200, scenarios_200, "(Total N=200, Effect size = 0.8)")
 
 save_plot("log_diff_50_8.png", log_diff_50, 20, 10)
 save_plot("log_diff_100_8.png", log_diff_100, 20, 10)
@@ -288,13 +286,13 @@ save_plot("log_diff_200_8.png", log_diff_200, 20, 10)
 
 #### 필요시 ####
 # 평균 막대 그래프 생성 및 저장
-mean_bar_50 <- plot_mean_bar(results_50_tidy, "(Total N=50, Effect size = 0)")
-mean_bar_100 <- plot_mean_bar(results_100_tidy, "(Total N=100, Effect size = 0)")
-mean_bar_200 <- plot_mean_bar(results_200_tidy, "(Total N=200, Effect size = 0)")
+mean_bar_50 <- plot_mean_bar(results_50_tidy, "(Total N=50, Effect size = 0.5)")
+mean_bar_100 <- plot_mean_bar(results_100_tidy, "(Total N=100, Effect size = 0.5)")
+mean_bar_200 <- plot_mean_bar(results_200_tidy, "(Total N=200, Effect size = 0.5)")
 
-save_plot("mean_bar_50_0.png", mean_bar_50)
-save_plot("mean_bar_100_0.png", mean_bar_100)
-save_plot("mean_bar_200_0.png", mean_bar_200)
+save_plot("mean_bar_50_5.png", mean_bar_50)
+save_plot("robmean_bar_100_5.png", mean_bar_100)
+save_plot("mean_bar_200_0.5.png", mean_bar_200)
 
 # 히스토그램도 생성 및 저장
 hist_50 <- plot_bf_hist(results_50_tidy, "(Total N=50, Effect size = 0.5)")

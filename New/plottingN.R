@@ -7,9 +7,41 @@ home_dir <- "."
 source(file = file.path("./New/functionsN.R"))
 
 # Load all three RDS files
-results_50 <- readRDS("./New/mergedFin50ES0_r1.RDS")
-results_100 <- readRDS("./New/mergedFin100ES0_r1.RDS")
-results_200 <- readRDS("./New/mergedFin200ES0_r1.RDS")
+results_50 <- readRDS("./New/robust_merge50E5_r1.RDS")
+results_100 <- readRDS("./New/robust_merge100E8_r1v3.RDS")
+results_200 <- readRDS("./New/robust_merge200E5_r1.RDS")
+results_600 <- readRDS("./New/addresults600E2.RDS")
+results_1000 <- readRDS("./New/addresults1000E2.RDS")
+
+# Scenarios
+scenarios_600 <- tibble(
+  scenario = 1:5,
+  n1 = c(300, 240, 300, 240, 360),
+  n2 = c(300, 360, 300, 360, 240),
+  var1 = c(4, 4, 4, 4, 4),
+  var2 = c(4, 4, 2, 2, 2)
+) %>%
+  mutate(
+    varr = var2/var1,
+    total_n = n1 + n2,
+    # Concise format for labels
+    label = sprintf("n1=%d, n2=%d, VarR=%.1f", 
+                    n1, n2, varr)
+  )
+scenarios_1000 <- tibble(
+  scenario = 1:5,
+  n1 = c(500, 400, 500, 400, 600),
+  n2 = c(500, 600, 500, 600, 400),
+  var1 = c(4, 4, 4, 4, 4),
+  var2 = c(4, 4, 2, 2, 2)
+) %>%
+  mutate(
+    varr = var2/var1,
+    total_n = n1 + n2,
+    # Concise format for labels
+    label = sprintf("n1=%d, n2=%d, VarR=%.1f", 
+                    n1, n2, varr)
+  )
 
 # Define scenarios - sample size = 30
 scenarios_50 <- tibble(
@@ -60,36 +92,36 @@ scenarios_200 <- tibble(
   )
 # Define color palette and labels
 method_colors <- c(
-  "jzs" = "turquoise3",
-  "BeFi" = "coral"
+  "jzs" = "#00366C",
+  "BFGC" = "#F2A900"
 )
 
 # Define border colors (slightly darker)
 method_border_colors <- c(
   "jzs" = "turquoise4",
-  "BeFi" = "coral4"
+  "BFGC" = "coral4"
 )
 
 bf_method_labels <- c(
   "jzs" = expression(BF[JZS]),
-  "BeFi" = expression(BF[BeFi])
+  "BFGC" = expression(BF[BFGC])
 )
 
 # Common theme settings
 theme_paper <- function() {
   theme_minimal() +
     theme(
-      text = element_text(family = "Times New Roman", size = 12),
-      axis.title = element_text(size = 12, face = "bold"),
-      axis.text = element_text(size = 10),
+      text = element_text(family = "Times New Roman", size = 10),
+      axis.title = element_text(size = 10, face = "bold"),
+      axis.text = element_text(size = 9),
       strip.text = element_text(size = 10, face = "bold"),  # Reduced panel title size
-      plot.title = element_text(size = 14, face = "bold"),  # Reduced overall graph title size
+      plot.title = element_text(size = 10, face = "bold"),  # Reduced overall graph title size
       plot.subtitle = element_text(size = 9),
-      plot.caption = element_text(size = 11, hjust = 1, face = "italic"),  # Footnote size and style
+      plot.caption = element_text(size = 9, hjust = 1, face = "italic"),  # Footnote size and style
       legend.position = "bottom",
       legend.key.size = unit(1, "cm"),  # Increased legend size
-      legend.title = element_text(size = 11),
-      legend.text = element_text(size = 10),
+      legend.title = element_text(size = 8),
+      legend.text = element_text(size = 9),
       panel.grid.major = element_line(color = "gray85", linewidth = 0.4),
       panel.grid.minor = element_line(color = "gray95", linewidth = 0.2),
       panel.background = element_rect(fill = "white", color = NA),
@@ -117,7 +149,7 @@ process_bf_data <- function(results_df, scenarios_df) {
     # Clean up method labels - change gica to BeFi here
     mutate(
       method_short = case_when(
-        method == "log_BF_gica" ~ "BeFi",
+        method == "log_BF_gica" ~ "BFGC",
         method == "log_BF_jzs" ~ "jzs",
         TRUE ~ gsub("log_BF_", "", method)
       )
@@ -198,11 +230,19 @@ hist_200 <- plot_bf_histogram(results_200_tidy, "(Total N=200, Effect size = 0.5
 box_200 <- plot_bf_boxplot(results_200_tidy, "(Total N=200, Effect size = 0.5)")
 print(hist_200)
 print(box_200)
-
+# === results_600 ===
+results_600_tidy <- process_bf_data(results_600, scenarios_600)
+box_600 <- plot_bf_boxplot(results_600_tidy, "(Total N=600, Effect size = 0.2)")
+# === results_600 ===
+results_1000_tidy <- process_bf_data(results_1000, scenarios_1000)
+box_1000 <- plot_bf_boxplot(results_1000_tidy, "(Total N=1000, Effect size = 0.2)")
+# save added scenarios
+ggsave("boxTotal_600.png", plot = box_600, width = 14, height = 10, dpi = 600, units = "cm")
+ggsave("boxTotal_1000.png", plot = box_1000, width = 14, height = 10, dpi = 600, units = "cm")
 # === Additional Analysis: Comparison of BF_jzs and BF_gica ===
 
 # Calculate summary statistics by method
-summary_stats_50 <- results_50_tidy %>% # Change sample if needed
+summary_stats_100 <- results_100_tidy %>% # Change sample if needed
   group_by(scenario, method_short) %>%
   summarise(
     mean_log_BF = mean(log_BF),
@@ -213,7 +253,7 @@ summary_stats_50 <- results_50_tidy %>% # Change sample if needed
     .groups = "drop"
   )
 
-print(summary_stats_50)
+print(summary_stats_100)
 
 # Alternative approach: Using log differences (log(BF_JZS) - log(BF_BeFi))
 log_bf_diff <- function(results_df, scenarios_df, title) {
@@ -269,9 +309,9 @@ plot_mean_bar <- function(bf_tidy, title) {
   
   # Create graph dividing scenarios into individual panels (free y-axis scale)
   ggplot(summary_stats, aes(x = method_short, y = mean_log_BF, fill = method_short)) +
-    geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.7, alpha = 0.8) +
+    geom_bar(stat = "identity", position = position_dodge(width = 0.7), width = 0.7, alpha = 0.8) +
     geom_errorbar(aes(ymin = mean_log_BF - se_log_BF, ymax = mean_log_BF + se_log_BF),
-                  width = 0.25, linewidth = 0.5) +
+                  width = 0.25, linewidth = 0.4) +
     geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", linewidth = 0.5) +
     scale_fill_manual(values = method_colors, 
                       labels = bf_method_labels) +
@@ -289,18 +329,28 @@ plot_mean_bar <- function(bf_tidy, title) {
     ) +
     theme_paper() +
     theme(
-      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 10),  # Adjust x-axis text alignment
+      axis.text.x = element_text(angle = 0, hjust = 0.5, size = 7),  # Adjust x-axis text alignment
       strip.text = element_text(size = 9),  # Adjust panel title size
-      panel.spacing = unit(1, "lines")  # Adjust panel spacing
+      panel.spacing = unit(1, "lines"),  # Adjust panel spacing
+      legend.key.size = unit(0.4, "cm"),       # 범례 키 크기 조절
+      legend.spacing.x = unit(0.2, "cm"),      # 범례 아이템 간 수평 간격
+      legend.margin = margin(t = 0, r = 5, b = 0, l = 5),  # 범례 전체 마진
+      legend.text = element_text(size = 9)     # 범례 글자 크기 조절
     )
 }
 mean_bar_50 <- plot_mean_bar(results_50_tidy, "(Total N=50, Effect size = 0.5)")
 mean_bar_100 <- plot_mean_bar(results_100_tidy, "(Total N=100, Effect size = 0.5)")
 mean_bar_200 <- plot_mean_bar(results_200_tidy, "(Total N=200, Effect size = 0.5)")
+mean_bar_600 <- plot_mean_bar(results_600_tidy, "(Total N=600, Effect size = 0.2)")
+mean_bar_1000 <- plot_mean_bar(results_1000_tidy, "(Total N=1000, Effect size = 0.2)")
 # Output graphs
 print(mean_bar_50)
 print(mean_bar_100)
 print(mean_bar_200)
+
+# save added scenario
+ggsave("barTotal_600.png", plot = mean_bar_600, width = 14, height = 10, dpi = 600, units = "cm")
+ggsave("barTotal_1000.png", plot = mean_bar_1000, width = 14, height = 10, dpi = 600, units = "cm")
 
 #### Additional visualization experiments below ####
 # Correlation analysis function by scenario for BF_jzs and BF_gica (blue-yellow-red color contrast)

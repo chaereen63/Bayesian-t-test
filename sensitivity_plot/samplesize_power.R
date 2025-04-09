@@ -139,10 +139,10 @@ results <- data.frame(
   N = sample_sizes * 2,  # 총 표본 크기
   JZSr707 = numeric(length(sample_sizes)),
   JZSr1 = numeric(length(sample_sizes)),
-  BeFi = numeric(length(sample_sizes)),
+  BFGC = numeric(length(sample_sizes)),
   log_JZSr707 = numeric(length(sample_sizes)),
   log_JZSr1 = numeric(length(sample_sizes)),
-  log_BeFi = numeric(length(sample_sizes))
+  log_BFGC = numeric(length(sample_sizes))
 )
 
 # 각 표본 크기에 대해 베이즈 인자 계산
@@ -179,7 +179,7 @@ for (i in 1:length(sample_sizes)) {
 plot_data <- data.frame(
   N = rep(results$N, 3),
   log10BF = c(results$log_JZSr707, results$log_JZSr1, results$log_BeFi),
-  Method = factor(rep(c("JZS (r=1/√2)", "JZS (r=1)", "BeFi"), each = nrow(results)))
+  Method = factor(rep(c("JZS (r=1/√2)", "JZS (r=1)", "BFGC"), each = nrow(results)))
 )
 
 # 각 방법이 log10(BF10) = 0을 넘는 지점 찾기
@@ -217,8 +217,8 @@ crossing_points$x_offset <- 0     # 기본 x 오프셋
 
 # 각 방법별로 위치 조정 (레이블이 겹치지 않도록)
 # BeFi(salmon) 레이블은 오른쪽 아래에 위치
-crossing_points$y_offset[crossing_points$Method == "BeFi"] <- -0.07
-crossing_points$x_offset[crossing_points$Method == "BeFi"] <- 40
+crossing_points$y_offset[crossing_points$Method == "BFGC"] <- -0.07
+crossing_points$x_offset[crossing_points$Method == "BFGC"] <- 40
 
 # JZS(r=1)(#18392B) 레이블은 왼쪽 위에 위치
 crossing_points$x_offset[crossing_points$Method == "JZS (r=1)"] <- -10
@@ -232,7 +232,6 @@ crossing_points$y_offset[crossing_points$Method == "JZS (r=1/√2)"] <- 0.03
 # 공식: N = 2 * (1.96 + 0.84)^2 / d^2, 여기서 d = (mu1 - mu2) / sd = 0.4 / 2 = 0.2
 p_05_power80_n <- 2 * (1.96 + 0.84)^2 * 4 / 0.4^2
 
-desaturate(c("#00366C", "#4682B4", "#F2A900"))
 # 그래프 생성
 plot <- ggplot(plot_data, aes(x = N, y = log10BF, color = Method, linetype = Method)) +
   geom_line(size = 1) +

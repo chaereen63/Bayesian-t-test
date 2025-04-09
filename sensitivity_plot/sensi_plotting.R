@@ -30,10 +30,10 @@ results_long <- results_5 %>%
       scale == "BF_jzsM" ~ "Medium",
       scale == "BF_jzsW" ~ "Wide",
       scale == "BF_jzsU" ~ "Ultrawide",
-      scale == "BF_gica" ~ "BeFi",
+      scale == "BF_gica" ~ "BFGC",
       TRUE ~ scale
     ),
-    scale = factor(scale, levels = c("Medium", "Wide", "Ultrawide", "BeFi"))
+    scale = factor(scale, levels = c("Medium", "Wide", "Ultrawide", "BFGC"))
   )
 
 # 평균 계산
@@ -42,11 +42,11 @@ results_mean <- results_long %>%
   summarise(mean_logBF = mean(logBF))
 
 # BeFi 평균 추출
-befi_mean <- results_mean %>% filter(scale == "BeFi") %>% pull(mean_logBF)
+befi_mean <- results_mean %>% filter(scale == "BFGC") %>% pull(mean_logBF)
 
 # JZS 데이터만 추출 (BeFi 제외)
-results_jzs <- results_long %>% filter(scale != "BeFi")
-results_jzs_mean <- results_mean %>% filter(scale != "BeFi")
+results_jzs <- results_long %>% filter(scale != "BFGC")
+results_jzs_mean <- results_mean %>% filter(scale != "BFGC")
 
 # 그래프 생성 - 색상 통일
 total <- ggplot() +
@@ -70,7 +70,7 @@ total <- ggplot() +
   
   # BeFi 선 레이블
   annotate("text", x = 3, y = befi_mean + 0.01, 
-           label = "BeFi", color = "#F2A900", family = "Times New Roman", size = 3) +
+           label = "BFGC", color = "#F2A900", family = "Times New Roman", size = 3) +
   
   # 그래프 제목 및 축 레이블 - 영어로 변경
   labs(title = "Comparison of log Bayes Factor Means by Scale",
@@ -93,7 +93,7 @@ ggsave("total_sensitivity0.png", plot = total, width = 12, height = 9, units = "
 
 #### 표본크기 별로 ####
 # 데이터 재구성 (long format으로 변환) 및 표본 크기 합 계산
-results_long <- results_5 %>%
+results_long <- results_0 %>%
   mutate(sample_size_sum = n1 + n2) %>%  # 표본 크기 합 계산
   # 표본 크기 합 50, 100, 200만 필터링
   filter(sample_size_sum %in% c(50, 100, 200)) %>%
@@ -110,10 +110,10 @@ results_long <- results_5 %>%
       scale == "BF_jzsM" ~ "Medium",
       scale == "BF_jzsW" ~ "Wide",
       scale == "BF_jzsU" ~ "Ultrawide",
-      scale == "BF_gica" ~ "BeFi",
+      scale == "BF_gica" ~ "BFGC",
       TRUE ~ scale
     ),
-    scale = factor(scale, levels = c("Medium", "Wide", "Ultrawide", "BeFi")),
+    scale = factor(scale, levels = c("Medium", "Wide", "Ultrawide", "BFGC")),
     # 표본 크기 합을 요인으로 변환하고 순서 지정
     sample_size_sum = factor(sample_size_sum, levels = c(50, 100, 200))
   )
@@ -125,12 +125,12 @@ results_mean <- results_long %>%
 
 # BeFi 데이터 추출 (각 표본 크기 합별)
 befi_means <- results_mean %>% 
-  filter(scale == "BeFi") %>%
+  filter(scale == "BFGC") %>%
   select(sample_size_sum, mean_logBF)
 
 # JZS 데이터만 추출 (BeFi 제외)
 results_jzs_mean <- results_mean %>% 
-  filter(scale != "BeFi")
+  filter(scale != "BFGC")
 
 # 색상 정의
 befi_color <- "#F2A900"  # 살구색/코랄
@@ -158,12 +158,12 @@ plot <- ggplot() +
   
   # 각 패널별로 BeFi 레이블 추가
   geom_text(data = befi_means,
-            aes(x = 3, y = mean_logBF + 0.08, label = "BeFi"), #effect size= 0인 경우 +0.03
+            aes(x = 3, y = mean_logBF + 0.03, label = "BFGC"), #effect size= 0인 경우 +0.03
             color = befi_color, family = "Times New Roman") +
   
   # 그래프 제목 및 축 레이블
   labs(title = "Comparison of log Bayes Factor Means by Scale and Sample Size",
-       subtitle = "JZS (bars) vs BeFi (line)",
+       subtitle = "JZS (bars) vs BFGC (line)",
        x = "r-scale",
        y = "log(BF) Mean",
        caption = "Note: log base 10 is used") +
@@ -181,4 +181,4 @@ plot <- ggplot() +
     strip.text = element_text(face = "bold", family = "Times New Roman", size = 9)
   )
 print(plot)
-ggsave("sensitivity5.png", plot = plot, dpi = 600, width = 20, height = 10, units = "cm")
+ggsave("sensitivity0.png", plot = plot, dpi = 600, width = 20, height = 10, units = "cm")
