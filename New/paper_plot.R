@@ -7,7 +7,7 @@ library(gridExtra)
 
 # 효과크기별 결과 파일 로드
 results_100_es8 <- readRDS("./New/mergedFin200ES8_r1.RDS")  # 효과크기 0.8
-results_100_es5 <- readRDS("./New/mergedFin200ES5_r1.RDS")  # 효과크기 0.5
+results_100_es5 <- readRDS("./New/mergedFin200ES5_r1v2.RDS")  # 효과크기 0.5
 results_100_es2 <- readRDS("./New/mergedFin200ES2_r1.RDS")  # 효과크기 0.2
 results_100_es0 <- readRDS("./New/mergedFin200ES0_r1.RDS")  # 효과크기 0.0
 
@@ -132,6 +132,11 @@ create_plot <- function(results_df, title, is_left_column = FALSE, add_y_axis = 
   
   # y축 라벨 설정 - 모든 그래프에서 제거하고 나중에 하나만 추가
   y_title <- NULL
+  # 베치 조정
+  layout_matrix <- matrix(c(
+    1, 2, NA,
+    3, 4, 5
+  ), byrow = TRUE, nrow = 2)
   
   # 그래프 생성
   p <- ggplot(summary_stats, aes(x = method_short, y = mean_log_BF, fill = method_short)) +
@@ -179,7 +184,7 @@ create_plot <- function(results_df, title, is_left_column = FALSE, add_y_axis = 
 # 효과 크기 0.8 그룹의 y축 범위
 es_0_8_y_limits <- c(0, 7) # 50: 1.25, 100: 2.7, 200: 7
 # 효과 크기 0.5 그룹의 y축 범위 - 값이 더 작아 패턴이 잘 보이도록 범위 좁힘
-es_0_5_y_limits <- c(0, 2) # 50: 0.3, 100: 0.8, 200: 2
+es_0_5_y_limits <- c(0,2) # 50: 0.3, 100: 0.8, 200: 2
 # 효과 크기 0.2 및 0.0 그룹의 y축 범위
 negative_y_limits <- c(-0.8, 0) # 50: -0.6, 100: -0.7, 200: -0.8
 
@@ -190,7 +195,7 @@ p3 <- create_plot(results_100_es5, "(C) Effect size = 0.5", FALSE, y_limits = es
 p4 <- create_plot(results_100_es8, "(D) Effect size = 0.8", TRUE, y_limits = es_0_8_y_limits)
 
 # 범례 생성
-legend_plot <- ggplot(process_bf_data(results_100_es8, scenarios_100), 
+legend_plot <- ggplot(process_bf_data(results_100_es8, scenarios_200), 
                       aes(x = method_short, y = log_BF, fill = method_short)) +
   geom_bar(stat = "identity") +
   scale_fill_manual(values = method_colors, labels = bf_method_labels) +
@@ -255,4 +260,4 @@ final_plot_with_y_label <- add_shared_y_label(final_plot_with_label)
 print(final_plot_with_y_label)
 
 # 최종 그래프 저장
-ggsave("combined_plot_n200r1_rename.png", final_plot_with_y_label, width = 23, height = 14, dpi = 600, units = "cm")
+ggsave("combined_plot_n200r1_seed2.png", final_plot_with_y_label, width = 23, height = 14, dpi = 600, units = "cm")

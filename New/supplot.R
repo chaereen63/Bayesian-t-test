@@ -8,9 +8,9 @@ home_dir <- "."
 source(file = file.path("./New/functionsN.R"))
 
 # Load all three RDS files
-results_50 <- readRDS("./New/mergedFin50ES8_r1.RDS")
-results_100 <- readRDS("./New/robust_merge100E5_r1.RDS")
-results_200 <- readRDS("./New/mergedFin200ES8_r1.RDS")
+results_50 <- readRDS("./New/mergedFin50ES5_r1v2.RDS")
+results_100 <- readRDS("./New/mergedFin100ES5_r1v2.RDS")
+results_200 <- readRDS("./New/mergedFin200ES5_r1v2.RDS")
 
 # Define scenarios - sample size = 50
 scenarios_50 <- tibble(
@@ -267,22 +267,22 @@ save_plot <- function(filename, plot, width = 13, height = 8, dpi = 600, units =
 }
 
 # Boxplot 생성 및 저장
-box_50 <- plot_bf_boxplot(results_50_tidy, "(Total N=50, Effect size = 0.8)")
+box_50 <- plot_bf_boxplot(results_50_tidy, "(Total N=50, Effect size = 0.5)")
 box_100 <- plot_bf_boxplot(results_100_tidy, "(Total N=100, Effect size = 0.5)")
-box_200 <- plot_bf_boxplot(results_200_tidy, "(Total N=200, Effect size = 0.8)")
+box_200 <- plot_bf_boxplot(results_200_tidy, "(Total N=200, Effect size = 0.5)")
 
-save_plot("boxplot_50E8.png", box_50)
-save_plot("robustboxplot_100E5.png", box_100)
-save_plot("boxplot_200E8.png", box_200)
+save_plot("boxplot_50E5_seed2.png", box_50)
+save_plot("robustboxplot_100E5_seed2.png", box_100)
+save_plot("boxplot_200E5_seed2.png", box_200)
 
 # 로그 차이 산점도 생성 및 저장
-log_diff_50 <- log_bf_diff(results_50, scenarios_50, "(Total N=50, Effect size = 0.8)")
-log_diff_100 <- log_bf_diff(results_100, scenarios_100, "(Total N=100, Effect size = 0.8)")
-log_diff_200 <- log_bf_diff(results_200, scenarios_200, "(Total N=200, Effect size = 0.8)")
+log_diff_50 <- log_bf_diff(results_50, scenarios_50, "(Total N=50, Effect size = 0.5)")
+log_diff_100 <- log_bf_diff(results_100, scenarios_100, "(Total N=100, Effect size = 0.5)")
+log_diff_200 <- log_bf_diff(results_200, scenarios_200, "(Total N=200, Effect size = 0.5)")
 
-save_plot("log_diff_50_8.png", log_diff_50, 20, 10)
-save_plot("log_diff_100_8.png", log_diff_100, 20, 10)
-save_plot("log_diff_200_8.png", log_diff_200, 20, 10)
+save_plot("log_diff_50_5seed2.png", log_diff_50, 20, 10)
+save_plot("log_diff_100_5seed2.png", log_diff_100, 20, 10)
+save_plot("log_diff_200_5seed2.png", log_diff_200, 20, 10)
 
 #### 필요시 ####
 # 평균 막대 그래프 생성 및 저장

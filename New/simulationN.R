@@ -6,13 +6,14 @@ library(tidyverse)
 
 # Set the computational node
 home_dir   <- "."
-output_dir <- file.path("D:/robust_Fin100E5_r1") #USB 경로 수정하기
+output_dir <- file.path("D:/resultsFin200E5_r1") #USB 경로 수정하기
 start_dir  <- getwd()
 
 # Load the functions and settings
 source(file = file.path(home_dir, "./New/functionsN.R"))
-settings <- readRDS(file = file.path(home_dir, "/New/set_Fin100ES5.RDS")) #추가된 조건
-# settings$seed <- sample.int(.Machine$integer.max, nrow(settings))
+settings <- readRDS(file = file.path(home_dir, "/New/set_Fin200ES5.RDS")) #추가된 조건
+ settings$seed <- sample.int(.Machine$integer.max, nrow(settings))
+ saveRDS(settings, file = "set_fin200ES5v2.RDS")
 print(head(settings))
 print(nrow(settings)) # 평균차 조건추가 8*500
 
@@ -28,7 +29,8 @@ run_simulation <- function(current_settings) {
     sd1   = current_settings$sd1,
     sd2   = current_settings$sd2,
     n1    = current_settings$n1,
-    n2    = current_settings$n2
+    n2    = current_settings$n2,
+    seed = current_settings$seed
   )
   
   # 1. BayesFactor_JZS
