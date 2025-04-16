@@ -27,6 +27,8 @@ JZSraw <- ttestBF(group1_small, group2_small, rscale = 1)
 print(JZSraw)
 JZSstat <- ttest.tstat(t_result_small$statistic, n1=25, n2=25, rscale = 1, simple=T)
 print(JZSstat) #ttestBF와 동일한 값을 생성하는지 확인
+JZSstat <- ttest.tstat(t_result_small$statistic, n1=20, n2=30, rscale = 1, simple=T)
+print(JZSstat) #ttestBF와 동일한 값을 생성하는지 확인
 #Behrens-Fisher
 BeFiraw <- BeFiBF(x1 = group1_small, x2 = group2_small)
 print(BeFiraw$bf10)

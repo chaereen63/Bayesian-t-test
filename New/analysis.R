@@ -1,12 +1,14 @@
 library(dplyr)
 library(tidyr)
+library(effectsize)  # effectsize 패키지 로드
 
 ## 효과크기별 결과 파일 로드
-  #표본크기 별로 바꿔보기
-results_es8 <- readRDS("./New/mergedFin50ES8_r1.RDS")  # 효과크기 0.8
-results_es5 <- readRDS("./New/mergedFin50ES5_r1v2.RDS")  # 효과크기 0.5
-results_es2 <- readRDS("./New/mergedFin50ES2_r1.RDS")  # 효과크기 0.2
-results_es0 <- readRDS("./New/mergedFin50ES0_r1.RDS")  # 효과크기 0.0
+#표본크기 별로 바꿔보기
+results_es8 <- readRDS("./New/mergedFin200ES8_r1.RDS")  # 효과크기 0.8
+results_es5 <- readRDS("./New/mergedFin200ES5_r1v2.RDS")  # 효과크기 0.5
+results_es2 <- readRDS("./New/mergedFin200ES2_r1.RDS")  # 효과크기 0.2
+results_es0 <- readRDS("./New/mergedFin200ES0_r1.RDS")  # 효과크기 0.0
+
 # 1. 데이터 처리 함수 - long format으로 변환
 process_bf_data <- function(results_df, effect_size_label) {
   results_long <- results_df %>%
@@ -28,6 +30,8 @@ process_bf_data <- function(results_df, effect_size_label) {
         method == "log_BF_jzs" ~ "JZS",
         TRUE ~ method
       ),
+      # method를 factor로 변환하고 JZS를 reference로 설정
+      method = factor(method, levels = c("JZS", "BFGC")),
       # 시나리오를 factor로 변환
       scenario = factor(as.character(scenario), levels = c("1", "2", "3", "4", "5")),
       # 효과크기 정보 추가
@@ -46,10 +50,11 @@ set_contrasts <- function(data) {
      length(levels(data$scenario)) >= 5) {
     
     contrasts(data$scenario) <- cbind(
-      "Comp1" = c(-2, -2, -2, 3, 3),
+      "Comp1" = c(1, -1, 0, 0, 0),
       "Comp2" = c(1, 1, -2, 0, 0),
-      "Comp3" = c(0, 0, 0, 1, -1),
-      "Comp4" = c(1, -1, 0, 0, 0)
+      "Comp3" = c(-2, -2, -2, 3, 3),
+      "Comp4" = c(0, 0, 0, 1, -1)
+      
     )
     
     return(data)
@@ -59,7 +64,7 @@ set_contrasts <- function(data) {
   }
 }
 
-# 3. 개별 효과크기 데이터 분석 함수
+# 3. 개별 효과크기 데이터 분석 함수 - effectsize 패키지 활용
 analyze_data <- function(data, effect_size_label) {
   cat("\n==================================================\n")
   cat("효과크기", effect_size_label, "에 대한 분석 결과\n")
@@ -69,6 +74,11 @@ analyze_data <- function(data, effect_size_label) {
   model <- aov(log_BF ~ scenario * method, data = data)
   cat("ANOVA 결과:\n")
   print(summary(model))
+  
+  # effectsize 패키지를 사용한 부분 에타 제곱 계산
+  cat("\n부분 에타 제곱(Partial Eta Squared) 효과크기:\n")
+  eta_squared_results <- eta_squared(model, partial = TRUE)
+  print(eta_squared_results)
   
   # 계획된 대비(contrast) 분석
   cat("\n대비(contrast) 결과:\n")
@@ -102,8 +112,8 @@ long_data0 <- set_contrasts(long_data0)
 long_data2 <- set_contrasts(long_data2)
 long_data5 <- set_contrasts(long_data5)
 long_data8 <- set_contrasts(long_data8)
-  # check
-  contrasts(long_data8$scenario)
+# check
+contrasts(long_data8$scenario)
 # 6. 개별 효과크기 데이터 분석
 model0 <- analyze_data(long_data0, "0.0")
 model2 <- analyze_data(long_data2, "0.2")
@@ -116,11 +126,15 @@ combined_data <- bind_rows(long_data0, long_data2, long_data5, long_data8) %>%
     effect_size = factor(effect_size, levels = c("0.0", "0.2", "0.5", "0.8"))
   )
 combined_data <- set_contrasts(combined_data)
-# 8. 통합 데이터 분석
-cat("모든 효과크기를 통합한 3원 ANOVA 분석 결과\n")
-
+# 8. 통합 데이터 분석 - effectsize 패키지 활용
 full_model <- aov(log_BF ~ effect_size * scenario * method, data = combined_data)
+cat("모든 효과크기를 통합한 3원 ANOVA 분석 결과\n")
 print(summary(full_model))
+
+# effectsize 패키지를 사용한 부분 에타 제곱 계산
+eta_squared_full <- eta_squared(full_model, partial = TRUE)
+cat("\n통합 데이터에 대한 부분 에타 제곱(Partial Eta Squared) 효과크기:\n")
+print(eta_squared_full)
 
 # 계획된 대비(contrast) 분석
 cat("\n대비(contrast) 결과:\n")
