@@ -212,6 +212,7 @@ scenario_effect <- emmeans(model_within,
                           subset = c(effect_size = c("0.2", "0.5", "0.8"), 
                                      sample_size = c("50", "100", "200")))
 joint_tests(scenario_effect, by = c("method", "effect_size", "sample_size"))
+summary(scenario_effect)
 # contrast
 scenario_effect2 <- emmeans(model_within, 
                          ~ scenario | method * effect_size * sample_size,
