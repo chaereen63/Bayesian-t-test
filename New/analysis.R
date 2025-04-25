@@ -4,10 +4,10 @@ library(effectsize)  # effectsize 패키지 로드
 
 ## 효과크기별 결과 파일 로드
 #표본크기 별로 바꿔보기
-results_es8 <- readRDS("./New/mergedFin200ES8_r1.RDS")  # 효과크기 0.8
-results_es5 <- readRDS("./New/mergedFin200ES5_r1v2.RDS")  # 효과크기 0.5
-results_es2 <- readRDS("./New/mergedFin200ES2_r1.RDS")  # 효과크기 0.2
-results_es0 <- readRDS("./New/mergedFin200ES0_r1.RDS")  # 효과크기 0.0
+results_es8 <- readRDS("./New/mergedFin100ES8_r1.RDS")  # 효과크기 0.8
+results_es5 <- readRDS("./New/mergedFin100ES5_r1.RDS")  # 효과크기 0.5
+results_es2 <- readRDS("./New/mergedFin100ES2_r1.RDS")  # 효과크기 0.2
+results_es0 <- readRDS("./New/mergedFin100ES0_r1.RDS")  # 효과크기 0.0
 
 # 1. 데이터 처리 함수 - long format으로 변환
 process_bf_data <- function(results_df, effect_size_label) {
@@ -50,9 +50,9 @@ set_contrasts <- function(data) {
      length(levels(data$scenario)) >= 5) {
     
     contrasts(data$scenario) <- cbind(
-      "Comp1" = c(1, -1, 0, 0, 0),
-      "Comp2" = c(1, 1, -2, 0, 0),
-      "Comp3" = c(-2, -2, -2, 3, 3),
+      "Comp1" = c(3, 3, -2, -2, -2),
+      "Comp2" = c(1, -1, 0, 0, 0),
+      "Comp3" = c(0, 0, 2, -1, -1),
       "Comp4" = c(0, 0, 0, 1, -1)
       
     )
@@ -166,3 +166,32 @@ overall_stats2 <- combined_data %>%
 
 cat("\n조건별 방법별 기술통계:\n")
 print(overall_stats2)
+
+#### Change score model ####
+# 데이터를 wide format으로 변환
+# 각 그룹 내에서 번호 부여
+indexed_data <- combined_data %>%
+  group_by(effect_size, scenario, method) %>%
+  mutate(rep_id = row_number()) %>%
+  ungroup()
+
+# wide format으로 변환
+full_wide_data <- indexed_data %>%
+  pivot_wider(
+    id_cols = c(effect_size, scenario, rep_id),
+    names_from = method,
+    values_from = log_BF
+  )
+
+# 두 방법 간의 차이 계산
+full_wide_data$diff_JZS_BFGC <- full_wide_data$JZS - full_wide_data$BFGC
+
+# 효과크기와 시나리오에 따른 방법 간 차이 분석
+diff_model <- aov(diff_JZS_BFGC ~ effect_size * scenario, data = full_wide_data)
+cat("\n방법 간 차이의 효과크기와 시나리오에 따른 분석:\n")
+print(summary(diff_model))
+
+# 계획된 대비 분석
+cat("\n대비(contrast) 결과:\n")
+contrast_results <- summary.lm(diff_model)
+print(contrast_results)
