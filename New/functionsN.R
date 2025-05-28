@@ -30,6 +30,13 @@ BeFi_sd <- function(sd1, sd2, n1, n2) { # Welch
   sqrt(sd1^2/n1 + sd2^2/n2)
 }
 
+cohen_d <- function(mean1, mean2, sd1, sd2, n1, n2) {
+  sd_p <- pooled_sd(sd1, sd2, n1, n2)
+  d = (mean1 - mean2) / sd_p
+  
+  return(d)
+}
+
 SES <- function(mean1, mean2, sd1, sd2) {
   (mean1 - mean2) / mean_sd(sd1, sd2)
 }

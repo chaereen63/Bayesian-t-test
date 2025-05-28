@@ -29,7 +29,8 @@ process_bf_data <- function(results_df, effect_size_label, sample_size_label) {
     select(scenario, JZS, BFGC) %>%
     # 시나리오를 factor로 변환
     mutate(
-      scenario = factor(as.character(scenario), levels = c("1", "2", "3", "4", "5")),
+      scenario = factor(as.character(scenario), levels = c("1", "2", "3", "4", "5"),
+                        labels = c("A", "B", "C", "D", "E")),
       # 효과크기 정보 추가
       effect_size = effect_size_label,
       # 표본크기 정보 추가

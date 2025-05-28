@@ -133,8 +133,8 @@ results_jzs_mean <- results_mean %>%
   filter(scale != "BFGC")
 
 # 색상 정의
-befi_color <- "#F2A900"  # 살구색/코랄
-jzs_color <- "#00366C"   # 청록색
+befi_color <- "#F2A900"
+jzs_color <- "#00366C"
 
 # 그래프 생성
 plot <- ggplot() +
