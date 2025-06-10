@@ -2,15 +2,12 @@ source("New/functionsN.R")
 library(tidyverse)
 
 output_dir <- "./study2/results"
-intermediate_dir <- file.path("D:S2results_E0") #효과크기 별로 폴더 구분
-# 경로 확인
-cat("최종 파일 경로:", file.path(output_dir, "S2results50_E0.RDS"), "\n")
-cat("중간 저장 폴더:", intermediate_dir, "\n")
-
+intermediate_dir <- file.path("D:S2results_E8") #효과크기 별로 폴더 구분
 # 폴더 존재 확인
 if (!dir.exists("./study2/results")) dir.create("./study2/results", recursive = TRUE)
-if (!dir.exists("D:/S2results_E0")) dir.create("D:/S2results_E0", recursive = TRUE)
-
+if (!dir.exists("D:/S2results_E5")) dir.create("D:/S2results_E5", recursive = TRUE)
+dir.exists("./study2/results")
+dir.exists("D:/S2results_E8")
 # 시나리오 설정 및 복제본 생성을 위한 통합 함수
 create_settings <- function(var1, var2, effect_size, n1, n2, replications = 50000) {
   # 표준편차 계산
@@ -48,14 +45,14 @@ create_settings <- function(var1, var2, effect_size, n1, n2, replications = 5000
 
 # 각 시나리오 설정 생성
 scenarios_config <- list(
-  list(var1 = 4, var2 = 4, n1 = 25, n2 = 25, scenario = 1),
-  list(var1 = 4, var2 = 4, n1 = 20, n2 = 30, scenario = 2),
-  list(var1 = 4, var2 = 2, n1 = 25, n2 = 25, scenario = 3),
-  list(var1 = 4, var2 = 2, n1 = 20, n2 = 30, scenario = 4),
-  list(var1 = 4, var2 = 2, n1 = 30, n2 = 20, scenario = 5)
+  list(var1 = 4, var2 = 4, n1 = 100, n2 = 100, scenario = 1),
+  list(var1 = 4, var2 = 4, n1 = 80, n2 = 120, scenario = 2),
+  list(var1 = 4, var2 = 2, n1 = 100, n2 = 100, scenario = 3),
+  list(var1 = 4, var2 = 2, n1 = 80, n2 = 120, scenario = 4),
+  list(var1 = 4, var2 = 2, n1 = 120, n2 = 80, scenario = 5)
 )
 
-# 시뮬레이션 함수 (메모리 효율적)
+# 시뮬레이션 함수 (메모리 효율적) - 수정됨
 run_simulation_batch <- function(scenario_config, effect_size = 0, replications = 50000) {
   
   cat("Processing scenario", scenario_config$scenario, 
@@ -73,9 +70,22 @@ run_simulation_batch <- function(scenario_config, effect_size = 0, replications 
   ) %>%
     mutate(scenario = scenario_config$scenario)
   
-  # 결과 저장용 벡터 미리 할당 (메모리 효율성)
+  # 결과 저장용 벡터 미리 할당 (메모리 효율성) - 누락된 벡터들 추가
   student_p_values <- numeric(replications)
   welch_p_values <- numeric(replications)
+  student_t_values <- numeric(replications)
+  welch_t_values <- numeric(replications) 
+  student_df <- numeric(replications)  # Student t-test 자유도
+  welch_df <- numeric(replications)    # Welch t-test 자유도
+  
+  # 표본 통계량 저장용 벡터들 추가
+  sample_mean1 <- numeric(replications)      # 추가됨
+  sample_mean2 <- numeric(replications)      # 추가됨
+  sample_sd1 <- numeric(replications)       # 추가됨
+  sample_sd2 <- numeric(replications)       # 추가됨
+  
+  # 효과크기 저장용 벡터 추가
+  cohens_d <- numeric(replications)          # 추가됨
   
   # 배치 처리 (메모리 관리를 위해)
   batch_size <- 1000  # 한 번에 처리할 시뮬레이션 수
@@ -118,6 +128,8 @@ run_simulation_batch <- function(scenario_config, effect_size = 0, replications 
       welch_p_values[idx] <- welch_test$p.value
       student_t_values[idx] <- student_test$statistic
       welch_t_values[idx] <- welch_test$statistic
+      student_df[idx] <- student_test$parameter      # 추가
+      welch_df[idx] <- welch_test$parameter          # 추가
       
       # 표본 통계량 저장
       sample_mean1[idx] <- mean(data$x1)
@@ -134,8 +146,8 @@ run_simulation_batch <- function(scenario_config, effect_size = 0, replications 
       cohens_d[idx] <- (sample_mean1[idx] - sample_mean2[idx]) / pooled_sd
       
       # t-statistic 기반 효과크기
-        # d_student[idx] <- student_t_values[idx] * sqrt(1/n1 + 1/n2)
-        # d_welch[idx] <- welch_t_values[idx] * sqrt(1/n1 + 1/n2)
+      # d_student[idx] <- student_t_values[idx] * sqrt(1/n1 + 1/n2)
+      # d_welch[idx] <- welch_t_values[idx] * sqrt(1/n1 + 1/n2)
     }
   }
   
@@ -173,6 +185,8 @@ run_simulation_batch <- function(scenario_config, effect_size = 0, replications 
     welch_t = welch_t_values,
     student_p = student_p_values,
     welch_p = welch_p_values,
+    student_df = student_df,    # 추가
+    welch_df = welch_df,        # 추가
     
     # 표본 효과크기들
     cohens_d = cohens_d,           # 표준적인 Cohen's d
@@ -259,24 +273,20 @@ run_full_simulation <- function(effect_size = 0, replications = 50000,
   return(final_results)
 }
 
-# Type I error rate 및 효과크기 분석 함수
+# Rejection rate 및 효과크기 분석 함수
 analyze_simulation_results <- function(results) {
   
-  # Type I error rate 분석
-  type1_summary <- results %>%
-    group_by(scenario, n1, n2, var1, var2, sd1, sd2, varr, sdr, pop_effect_size) %>%
+  # rejection rate 분석
+  reject_summary <- results %>%
+    group_by(scenario, n1, n2, var1, var2, sd1, sd2, pop_effect_size) %>%
     summarise(
-      # Type I error rates
-      student_type1 = mean(student_p < 0.05, na.rm = TRUE),
-      welch_type1 = mean(welch_p < 0.05, na.rm = TRUE),
+      # Rejection rates
+      student_reject = mean(student_p < 0.05, na.rm = TRUE),
+      welch_reject = mean(welch_p < 0.05, na.rm = TRUE),
       
-      # Type I error rate 신뢰구간
-      student_type1_se = sqrt(student_type1 * (1 - student_type1) / n()),
-      welch_type1_se = sqrt(welch_type1 * (1 - welch_type1) / n()),
-      
-      # 검정력 (effect_size > 0인 경우에만 의미있음)
-      student_power = ifelse(first(pop_effect_size) > 0, mean(student_p < 0.05, na.rm = TRUE), NA),
-      welch_power = ifelse(first(pop_effect_size) > 0, mean(welch_p < 0.05, na.rm = TRUE), NA),
+      # Rejection rate 신뢰구간
+      student_reject_se = sqrt(student_reject * (1 - student_reject) / n()),
+      welch_reject_se = sqrt(welch_reject * (1 - welch_reject) / n()),
       
       # 효과크기 요약 통계
       mean_cohens_d = mean(cohens_d, na.rm = TRUE),
@@ -290,19 +300,23 @@ analyze_simulation_results <- function(results) {
       mean_welch_t = mean(welch_t, na.rm = TRUE),
       sd_welch_t = sd(welch_t, na.rm = TRUE),
       
+      # 자유도 (대표값만 - 모든 복제본에서 동일하므로)
+      student_df = first(student_df),  # 평균 대신 첫 번째 값
+      welch_df = first(welch_df),      # 평균 대신 첫 번째 값
+      
       # 표본 크기
       n_sims = n(),
       .groups = 'drop'
     ) %>%
     mutate(
       # 신뢰구간 계산
-      student_type1_ci_lower = pmax(0, student_type1 - 1.96 * student_type1_se),
-      student_type1_ci_upper = pmin(1, student_type1 + 1.96 * student_type1_se),
-      welch_type1_ci_lower = pmax(0, welch_type1 - 1.96 * welch_type1_se),
-      welch_type1_ci_upper = pmin(1, welch_type1 + 1.96 * welch_type1_se)
+      student_reject_ci_lower = pmax(0, student_reject - 1.96 * student_reject_se),
+      student_reject_ci_upper = pmin(1, student_reject + 1.96 * student_reject_se),
+      welch_reject_ci_lower = pmax(0, welch_reject - 1.96 * welch_reject_se),
+      welch_reject_ci_upper = pmin(1, welch_reject + 1.96 * welch_reject_se)
     )
   
-  return(type1_summary)
+  return(reject_summary)
 }
 
 # 효과크기 분포 분석 함수
@@ -336,62 +350,19 @@ analyze_effect_size_distribution <- function(results) {
   return(effect_size_summary)
 }
 
-# 간단한 단일 함수 버전 (선택사항)
-run_simple_simulation <- function(effect_size = 0, replications = 50000) {
-  all_results <- tibble()
-  
-  for (i in seq_along(scenarios_config)) {
-    cat("Processing scenario", i, "\n")
-    
-    # 설정 생성
-    settings <- create_settings(
-      var1 = scenarios_config[[i]]$var1,
-      var2 = scenarios_config[[i]]$var2,
-      effect_size = effect_size,
-      n1 = scenarios_config[[i]]$n1,
-      n2 = scenarios_config[[i]]$n2,
-      replications = replications
-    ) %>% mutate(scenario = i)
-    
-    # rowwise로 시뮬레이션 실행 (재현성 코드와 유사)
-    results <- settings %>%
-      rowwise() %>%
-      mutate(
-        student_p = {
-          set.seed(seed)
-          data <- simulate_data(mu1, mu2, sd1, sd2, n1, n2, seed)
-          t.test(data$x1, data$x2, var.equal = TRUE)$p.value
-        },
-        welch_p = {
-          set.seed(seed)
-          data <- simulate_data(mu1, mu2, sd1, sd2, n1, n2, seed)
-          t.test(data$x1, data$x2, var.equal = FALSE)$p.value
-        }
-      ) %>%
-      ungroup() %>%
-      select(scenario, n1, n2, var1, var2, sd1, sd2, varr, effect_size, student_p, welch_p)
-    
-    all_results <- bind_rows(all_results, results)
-    gc() # 메모리 정리
-  }
-  
-  return(all_results)
-}
-
 # 실행 예시
 # 실행 예시들
 # 방법 1: 기본 실행 (중간 저장 O, 최종 저장 O)
-cat("=== Method 1: Full save ===\n")
-type1_results <- run_full_simulation(
-  effect_size = 0, 
-  replications = 50000,
-  output_file = file.path(output_dir, "S2results50_E0.RDS"),
+cat("simulation")
+results <- run_full_simulation(
+  effect_size = 0.8, # 효과크기 조건에 맞게 수정 
+  replications = 30000,
+  output_file = file.path(output_dir, "S2results200_E8.RDS"), #파일명 수정
   save_intermediate = TRUE,
   intermediate_dir = intermediate_dir
 )
 
 # 방법 2: 중간 저장만 (최종 파일 저장 X)
-cat("\n=== Method 2: Intermediate only ===\n")
 # type1_results <- run_full_simulation(
 #   effect_size = 0, 
 #   replications = 50000,
@@ -401,7 +372,6 @@ cat("\n=== Method 2: Intermediate only ===\n")
 # )
 
 # 방법 3: 메모리에서만 작업 (파일 저장 X)  
-cat("\n=== Method 3: Memory only ===\n")
 # type1_results <- run_full_simulation(
 #   effect_size = 0, 
 #   replications = 50000,
@@ -409,68 +379,91 @@ cat("\n=== Method 3: Memory only ===\n")
 #   save_intermediate = FALSE
 # )
 
-# 중간 파일에서 결과 불러오기 예시
-load_intermediate_results <- function(intermediate_dir = "temp_results", 
-                                      base_name = "simulation_results_type1_error") {
+#### 분석 ####
+# 대략적인 내용 및 결측치 확인
+print(results)
+names(results)
+sum(is.na(results))
+
+# 저장된 최종 파일에서 불러오기(저장본 확인용)
+# results <- readRDS("./study2/results/S2results50_E8.RDS")
+# names(results2)
+
+# rejection rate 분석
+reject_analysis <- analyze_simulation_results(results)
+
+# 결과를 전치하여 보기 좋게 만드는 함수
+transpose_results <- function(reject_analysis) {
   
-  scenario_files <- list.files(intermediate_dir, 
-                               pattern = paste0(base_name, "_scenario_\\d+\\.RDS"), 
-                               full.names = TRUE)
+  # 시나리오별로 열을 만들고 변수명을 행으로
+  transposed <- reject_analysis %>%
+    # 시나리오를 기준으로 열 만들기
+    pivot_longer(cols = -scenario, names_to = "variable", values_to = "value") %>%
+    pivot_wider(names_from = scenario, values_from = value, names_prefix = "Scenario_") %>%
+    # 변수명을 첫 번째 열로
+    relocate(variable, .before = everything())
   
-  if (length(scenario_files) == 0) {
-    cat("No intermediate files found in", intermediate_dir, "\n")
-    return(NULL)
-  }
-  
-  cat("Found", length(scenario_files), "intermediate files\n")
-  
-  results_list <- list()
-  for (i in seq_along(scenario_files)) {
-    results_list[[i]] <- readRDS(scenario_files[i])
-    cat("Loaded:", basename(scenario_files[i]), "\n")
-  }
-  
-  combined_results <- bind_rows(results_list)
-  cat("Combined", nrow(combined_results), "simulation results\n")
-  
-  return(combined_results)
+  return(transposed)
 }
 
-# 중간 파일 불러오기 예시
-# recovered_results <- load_intermediate_results("temp_results", "simulation_results_type1_error")
-
-# Type I error rate 분석
-type1_analysis <- analyze_simulation_results(type1_results)
-saveRDS(type1_analysis, file = "type1_error_analysis.RDS")
+reject_analysis_t <- transpose_results(reject_analysis)
+print(reject_analysis_t, n = Inf)  # 모든 행 출력
+# saveRDS(reject_analysis, file = "rejection_analysis.RDS")
 
 # 효과크기 분포 분석
-effect_size_analysis <- analyze_effect_size_distribution(type1_results)
-saveRDS(effect_size_analysis, file = "effect_size_analysis.RDS")
+effect_size_analysis <- analyze_effect_size_distribution(results)
+effect_size_t <- transpose_results(effect_size_analysis)
+print(effect_size_t, n=Inf)
+# saveRDS(effect_size_analysis, file = "effect_size_analysis.RDS")
 
-# 결과 출력
-print("=== Type I Error Rate Analysis ===")
-print(type1_analysis)
-
-print("\n=== Effect Size Distribution Analysis ===")
-print(effect_size_analysis)
-
-# 간단한 시각화 (선택사항)
+#### 간단한 시각화 ####
+# for type 1 error
 if (require(ggplot2)) {
-  p1 <- ggplot(type1_analysis, aes(x = factor(scenario))) +
-    geom_point(aes(y = student_type1, color = "Student's t"), size = 3) +
-    geom_point(aes(y = welch_type1, color = "Welch's t"), size = 3) +
-    geom_errorbar(aes(ymin = student_type1_ci_lower, ymax = student_type1_ci_upper, color = "Student's t"), width = 0.1) +
-    geom_errorbar(aes(ymin = welch_type1_ci_lower, ymax = welch_type1_ci_upper, color = "Welch's t"), width = 0.1) +
+  p1 <- ggplot(reject_analysis, aes(x = factor(scenario))) +
+    geom_point(aes(y = student_reject, color = "Student's t"), size = 4) +
+    geom_point(aes(y = welch_reject, color = "Welch's t"), size = 4) +
+    geom_errorbar(aes(ymin = student_reject_ci_lower, ymax = student_reject_ci_upper, color = "Student's t"), width = 0.2) +
+    geom_errorbar(aes(ymin = welch_reject_ci_lower, ymax = welch_reject_ci_upper, color = "Welch's t"), width = 0.2) +
     geom_hline(yintercept = 0.05, linetype = "dashed", color = "red") +
     labs(
-      title = "Type I Error Rates by Scenario",
+      title = "Rejection Rates by Scenario (N = 200, effect size = 0)",
       x = "Scenario",
-      y = "Type I Error Rate",
+      y = "Rejection Rate",
       color = "Test Type"
     ) +
     theme_minimal() +
     theme(legend.position = "bottom")
   
-  ggsave("type1_error_comparison.png", p1, width = 10, height = 6)
-  cat("Visualization saved: type1_error_comparison.png\n")
+  #ggsave("rejection_comparison.png", p1, width = 10, height = 6)
+  # cat("Visualization saved: rejection_comparison.png\n")
 }
+print(p1)
+
+# for power
+# 시나리오 1의 rejection rate를 기준선으로
+baseline_power <- reject_analysis %>% 
+  filter(scenario == 1) %>% 
+  pull(student_reject)
+
+if (require(ggplot2)) {
+  p2 <- ggplot(reject_analysis, aes(x = factor(scenario))) +
+    geom_point(aes(y = student_reject, color = "Student's t"), size = 4) +
+    geom_point(aes(y = welch_reject, color = "Welch's t"), size = 4) +
+    geom_errorbar(aes(ymin = student_reject_ci_lower, ymax = student_reject_ci_upper, color = "Student's t"), width = 0.2) +
+    geom_errorbar(aes(ymin = welch_reject_ci_lower, ymax = welch_reject_ci_upper, color = "Welch's t"), width = 0.2) +
+    geom_hline(yintercept = baseline_power, linetype = "dashed", color = "salmon") +
+    labs(
+      title = "Rejection Rates by Scenario (N = 200, effect size = 0.8)",
+      subtitle = paste("Green line = Scenario 1 baseline (Student's t : ", 
+                       round(baseline_power, 3), ")", sep = ""),
+      x = "Scenario",
+      y = "Rejection Rate",
+      color = "Test Type"
+    ) +
+    theme_minimal() +
+    theme(legend.position = "bottom")
+  
+  #ggsave("rejection_comparison.png", p1, width = 10, height = 6)
+  # cat("Visualization saved: rejection_comparison.png\n")
+}
+print(p2)
