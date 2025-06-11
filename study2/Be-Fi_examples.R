@@ -2,7 +2,7 @@ source("study2/Behrens-Fisher_distribution.R")
 
 #### central Behrens-Fisher distribution examples (delta = 0) ####
 
-# 예시 1: 균등한 경우
+# 예시 1: 모두 균등한 경우
 plot_befi_central(n1=30, n2=30, s1=2, s2=2)
 
 # 예시 2: 표본크기가 다른 경우
@@ -12,38 +12,68 @@ plot_befi_central(n1=10, n2=50, s1=2, s2=2)
 plot_befi_central(n1=50, n2=10, s1=2, s2=2)
 
 # 예시 3: 분산만 다른 경우
-plot_befi_central(n1=30, n2=30, s1=16, s2=1)
+plot_befi_central(n1=30, n2=30, s1=4, s2=2)
 
 # 예시 4: 분산과 표본크기가 모두 다른 경우
 # 2-a: 집단1에 더 의존하는 경우(T1분포에 더 가까운 경우)
-plot_befi_central(n1=10, n2=50, s1=16, s2=1)
+plot_befi_central(n1=10, n2=50, s1=4, s2=2)
 # 2-b: 집단2에 더 의존하는 경우(T2분포에 더 가까운 경우)
-plot_befi_central(n1=50, n2=10, s1=16, s2=1)
+plot_befi_central(n1=50, n2=10, s1=4, s2=2)
 
 # 예시 5: 극단적인 경우
 plot_befi_central(n1=5, n2=30, s1=2, s2=0.5)
 
-#### noncentral Behrens-Fisher distribution examples (delta = 1.5로 설정) ####
+#### location shifted Behrens-Fisher distribution examples (delta = 1.5로 설정) ####
 
-# 예시 1: 균등한 경우 (n1=n2, s1=s2)
-plot_befi_noncentral(n1=30, n2=30, s1=2, s2=2, delta=1.5)
+# 표준화 효과크기(Cohen's d)를 0.5로 고정
+target_cohens_d <- 0.5
 
-# 예시 2: 표본크기가 다른 경우
+# 각 조건에 맞는 delta 계산 함수
+calculate_delta <- function(s1, s2, cohens_d = target_cohens_d) {
+  variance <- (s1^2 + s2^2) / 2
+  delta <- cohens_d * sqrt(variance)
+  return(delta)
+}
+
+# 예시 1: 균등한 조건 (n1=n2, s1=s2)
+cat("=== 예시 1: 균등한 조건 (n1=n2, s1=s2) ===\n")
+delta1 <- calculate_delta(s1=2, s2=2)
+cat(sprintf("Cohen's d = %.2f, delta = %.3f\n", target_cohens_d, delta1))
+plot_befi_noncentral(n1=30, n2=30, s1=2, s2=2, delta=delta1)
+
+# 예시 2: 표본크기만 다른 경우
+delta2 <- calculate_delta(s1=2, s2=2)
 cat("\n=== 예시 2-a: 집단1에 더 의존하는 경우 (n1 < n2) ===\n")
-plot_befi_noncentral(n1=10, n2=50, s1=2, s2=2, delta=1.5)
+cat(sprintf("Cohen's d = %.2f, delta = %.3f\n", target_cohens_d, delta2))
+plot_befi_noncentral(n1=10, n2=50, s1=2, s2=2, delta=delta2)
 
 cat("\n=== 예시 2-b: 집단2에 더 의존하는 경우 (n1 > n2) ===\n")
-plot_befi_noncentral(n1=50, n2=10, s1=2, s2=2, delta=1.5)
+cat(sprintf("Cohen's d = %.2f, delta = %.3f\n", target_cohens_d, delta2))
+plot_befi_noncentral(n1=50, n2=10, s1=2, s2=2, delta=delta2)
 
 # 예시 3: 분산만 다른 경우 (s1 >> s2)
-plot_befi_noncentral(n1=30, n2=30, s1=16, s2=1, delta=1.5)
+cat("\n=== 예시 3: 분산만 다른 경우 (s1 >> s2) ===\n")
+delta3 <- calculate_delta(s1=4, s2=2)
+cat(sprintf("Cohen's d = %.2f, delta = %.3f\n", target_cohens_d, delta3))
+plot_befi_noncentral(n1=30, n2=30, s1=4, s2=2, delta=delta3)
 
 # 예시 4: 분산과 표본크기가 모두 다른 경우
+delta4 <- calculate_delta(s1=4, s2=2)
 cat("\n=== 예시 4-a: 집단1에 더 의존하는 경우 (n1 < n2, s1 > s2) ===\n")
-plot_befi_noncentral(n1=10, n2=50, s1=16, s2=1, delta=1.5)
+cat(sprintf("Cohen's d = %.2f, delta = %.3f\n", target_cohens_d, delta4))
+plot_befi_noncentral(n1=10, n2=50, s1=4, s2=2, delta=delta4)
 
 cat("\n=== 예시 4-b: 집단2에 더 의존하는 경우 (n1 > n2, s1 > s2) ===\n")
-plot_befi_noncentral(n1=50, n2=10, s1=16, s2=1, delta=1.5)
+cat(sprintf("Cohen's d = %.2f, delta = %.3f\n", target_cohens_d, delta4))
+plot_befi_noncentral(n1=50, n2=10, s1=4, s2=2, delta=delta4)
+
+# 각 조건별 delta 값 요약
+{cat("\n=== Delta 값 요약 ===\n")
+cat(sprintf("예시 1 (s1=2, s2=2): delta = %.3f\n", delta1))
+cat(sprintf("예시 2 (s1=2, s2=2): delta = %.3f\n", delta2))
+cat(sprintf("예시 3 (s1=16, s2=1): delta = %.3f\n", delta3))
+cat(sprintf("예시 4 (s1=16, s2=1): delta = %.3f\n", delta4))
+cat(sprintf("모든 경우에서 Cohen's d = %.2f로 동일\n", target_cohens_d))}
 
 # 예시 5: 극단적인 경우
 # case 4-a

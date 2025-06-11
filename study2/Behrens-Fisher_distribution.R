@@ -56,7 +56,7 @@ plot_befi_central <- function(n1, n2, s1, s2, xlim=c(-4, 4)) {
   t2_cdf <- pt(x, n2-1)
   
   # 플롯 설정 - 2x1 레이아웃으로 더 크게
-  par(mfrow=c(1,2), mar=c(4,4,3,2), mgp=c(2.5,1,0))
+  par(mfrow=c(1,2), mar=c(4,4,3,1), mgp=c(2.5,1,0))
   
   # PDF 플롯
   plot(x, pdf_vals, type='l', lwd=3, col='blue', 
@@ -68,7 +68,7 @@ plot_befi_central <- function(n1, n2, s1, s2, xlim=c(-4, 4)) {
   legend('topright', 
          legend=c('Behrens-Fisher', paste('t(', n1-1, ')', sep=''), paste('t(', n2-1, ')', sep='')),
          col=c('blue', 'red', 'darkgreen'), lty=c(1,2,3), lwd=c(3,2,2),
-         cex=0.8)
+         cex=0.8, x.intersp=0.5, text.width=strwidth("Behrens-Fisher", cex=0.5))
   
   # CDF 플롯
   plot(x, cdf_vals, type='l', lwd=3, col='blue',
@@ -80,7 +80,7 @@ plot_befi_central <- function(n1, n2, s1, s2, xlim=c(-4, 4)) {
   legend('bottomright', 
          legend=c('Behrens-Fisher', paste('t(', n1-1, ')', sep=''), paste('t(', n2-1, ')', sep='')),
          col=c('blue', 'red', 'darkgreen'), lty=c(1,2,3), lwd=c(3,2,2),
-         cex=0.8)
+         cex=0.8, x.intersp=0.1, text.width=strwidth("Behrens-Fisher", cex=0.5))
   
   # 매개변수 정보 출력
   cat("\n=== 매개변수 정보 ===\n")
@@ -178,13 +178,13 @@ plot_befi_noncentral <- function(n1, n2, s1, s2, delta=0, xlim=c(-4, 4)) {
   
   # 플롯 설정 - 여백을 더 타이트하게 조정
   par(mfrow=c(1,2), 
-      mar=c(4, 4, 3, 1),    # 오른쪽 여백을 1로 줄임
+      mar=c(1, 4, 3, 1),    # 오른쪽 여백을 1로 줄임
       mgp=c(2.5, 1, 0),
       oma=c(0, 0, 0, 0))    # 외부 여백 제거
   
   # PDF 플롯
   plot(x, pdf_vals, type='l', lwd=3, col='blue', 
-       main=paste("Noncentral Behrens-Fisher Distribution\nn1=", n1, ", n2=", n2, ", s1=", s1, ", s2=", s2, ", δ=", delta),
+       main=paste("Noncentral Behrens-Fisher Distribution\nn1=", n1, ", n2=", n2, ", s1=", s1, ", s2=", s2, ", δ=", round(delta,3)),
        xlab='x', ylab='Density', 
        ylim=c(0, max(pdf_vals, pdf_central, t1_pdf, t2_pdf)*1.05))
   lines(x, pdf_central, col='blue', lty=2, lwd=2)
@@ -193,7 +193,7 @@ plot_befi_noncentral <- function(n1, n2, s1, s2, delta=0, xlim=c(-4, 4)) {
   
   # 범례 위치와 크기 조정
   legend('topleft', # 범례 위치
-         legend=c(paste('BEFI (δ=', delta, ')', sep=''), 'BEFI (δ=0)', 
+         legend=c(paste('BEFI (δ=', round(delta,3), ')', sep=''), 'BEFI (δ=0)', 
                   paste('t(', n1-1, ')', sep=''), paste('t(', n2-1, ')', sep='')),
          col=c('blue', 'blue', 'red', 'darkgreen'), 
          lty=c(1,2,3,4), lwd=c(3,2,2,2),
@@ -212,7 +212,7 @@ plot_befi_noncentral <- function(n1, n2, s1, s2, delta=0, xlim=c(-4, 4)) {
   
   # 범례 위치와 크기 조정
   legend('bottomright', 
-         legend=c(paste('BEFI (δ=', delta, ')', sep=''), 'BEFI (δ=0)', 
+         legend=c(paste('BEFI (δ=', round(delta, 3), ')', sep=''), 'BEFI (δ=0)', 
                   paste('t(', n1-1, ')', sep=''), paste('t(', n2-1, ')', sep='')),
          col=c('blue', 'blue', 'red', 'darkgreen'), 
          lty=c(1,2,3,4), lwd=c(3,2,2,2),
