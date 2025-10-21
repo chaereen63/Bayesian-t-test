@@ -82,7 +82,7 @@ empty_plot <- function() {
 # Giron and Castillo (2021)
 library(pracma)
 
-BeFiBF <- function(x1, x2) {
+BFGCBF <- function(x1, x2) {
   
   # Calculate sample statistics
   xbar1 <- mean(x1)

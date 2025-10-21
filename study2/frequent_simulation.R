@@ -1,10 +1,10 @@
 source("New/functionsN.R")
 library(tidyverse)
 
-output_dir <- "./study2/results"
-intermediate_dir <- file.path("D:S2results_E8") #효과크기 별로 폴더 구분
+output_dir <- "./study2/results2"
+intermediate_dir <- file.path("D:S2results_E0") #효과크기 별로 폴더 구분
 # 폴더 존재 확인
-if (!dir.exists("./study2/results")) dir.create("./study2/results", recursive = TRUE)
+if (!dir.exists("./study2/results2")) dir.create("./study2/results2", recursive = TRUE)
 if (!dir.exists("D:/S2results_E5")) dir.create("D:/S2results_E5", recursive = TRUE)
 dir.exists("./study2/results")
 dir.exists("D:/S2results_E8")
@@ -79,13 +79,14 @@ run_simulation_batch <- function(scenario_config, effect_size = 0, replications 
   welch_df <- numeric(replications)    # Welch t-test 자유도
   
   # 표본 통계량 저장용 벡터들 추가
-  sample_mean1 <- numeric(replications)      # 추가됨
-  sample_mean2 <- numeric(replications)      # 추가됨
-  sample_sd1 <- numeric(replications)       # 추가됨
-  sample_sd2 <- numeric(replications)       # 추가됨
+  sample_mean1 <- numeric(replications)
+  sample_mean2 <- numeric(replications)
+  sample_sd1 <- numeric(replications)
+  sample_sd2 <- numeric(replications)
   
   # 효과크기 저장용 벡터 추가
-  cohens_d <- numeric(replications)          # 추가됨
+  pooled_d <- numeric(replications)
+  hete_d <- numeric(replications) # 이분산 가정
   
   # 배치 처리 (메모리 관리를 위해)
   batch_size <- 1000  # 한 번에 처리할 시뮬레이션 수
@@ -143,7 +144,9 @@ run_simulation_batch <- function(scenario_config, effect_size = 0, replications 
       
       # Cohen's d (pooled standard deviation 사용)
       pooled_sd <- sqrt(((n1-1) * sample_sd1[idx]^2 + (n2-1) * sample_sd2[idx]^2) / (n1 + n2 - 2))
-      cohens_d[idx] <- (sample_mean1[idx] - sample_mean2[idx]) / pooled_sd
+      pooled_d[idx] <- (sample_mean1[idx] - sample_mean2[idx]) / pooled_sd
+      arith_sd <- sqrt((sample_sd1[idx]^2+sample_sd2[idx]^2)/2)
+      hete_d[idx] <- (sample_mean1[idx] - sample_mean2[idx]) / arith_sd
       
       # t-statistic 기반 효과크기
       # d_student[idx] <- student_t_values[idx] * sqrt(1/n1 + 1/n2)

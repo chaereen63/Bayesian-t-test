@@ -1,9 +1,11 @@
 #analysis the results
 
 library(tidyverse)
+# install.packages("asht")
+library(asht)
 source(file = file.path("./New/functionsN.R"))
 
-n100es5 <- readRDS("./study2/S2merged200ES0.RDS")
+n100es5 <- readRDS("./study2/S2merged100ES5.RDS")
 
 head(n100es5)
 
