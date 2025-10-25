@@ -16,8 +16,8 @@ plot_t_distribution <- function(n1, n2, s1, s2, xlim = NULL, ylim_pdf = NULL, yl
   se2 <- s2 / sqrt(n2)
   se_pooled <- pooled_sd * sqrt(1/n1 + 1/n2)
   
-  # === 매개변수 정보 출력 ===
-  cat("=== 매개변수 정보 ===\n")
+  # === 모수 정보 출력 ===
+  cat("=== 모수 정보 ===\n")
   cat(sprintf("n1 = %d , n2 = %d\n", n1, n2))
   cat(sprintf("s1 = %.1f , s2 = %.1f\n", s1, s2))
   cat(sprintf("자유도: df = %d (n1 + n2 - 2)\n", df_pooled))
@@ -119,13 +119,6 @@ plot_t_distribution <- function(n1, n2, s1, s2, xlim = NULL, ylim_pdf = NULL, yl
   invisible(results)
 }
 
-# === 사용 예시 ===
-# 함수 실행
-results <- plot_t_distribution(n1 = 30, n2 = 30, s1 = 2, s2 = 2, xlim = c(-4, 4))
-
-results2 <- plot_t_distribution(n1 = 30, n2 = 30, s1 = 4, s2 = 2, xlim = c(-4, 4))
-results3 <- plot_t_distribution(n1 = 10, n2 = 50, s1 = 4, s2 = 2, xlim = c(-4, 4))
-results4 <- plot_t_distribution(n1 = 50, n2 = 10, s1 = 4, s2 = 2, xlim = c(-4, 4))
 
 #### noncentral t-distribution (Pooled variance 사용) ####
 # 비중심 t분포 그래프 및 통계량 계산 함수 (Pooled variance 사용)
@@ -149,8 +142,8 @@ plot_noncentral_t <- function(n1, n2, s1, s2, delta = 0, xlim = NULL, ylim_pdf =
   # 비중심 모수 계산 (noncentrality parameter)
   ncp <- delta / se_pooled
   
-  # === 매개변수 정보 출력 ===
-  cat("=== 매개변수 정보 ===\n")
+  # === 모수 정보 출력 ===
+  cat("=== 모수 정보 ===\n")
   cat(sprintf("n1 = %d , n2 = %d\n", n1, n2))
   cat(sprintf("s1 = %.1f , s2 = %.1f\n", s1, s2))
   cat(sprintf("자유도: df = %d (n1 + n2 - 2)\n", df_pooled))
@@ -307,25 +300,3 @@ plot_noncentral_t <- function(n1, n2, s1, s2, delta = 0, xlim = NULL, ylim_pdf =
   
   invisible(results)
 }
-
-# === 사용 예시 ===
-
-# 예시 1: 작은 효과 크기 (delta = 0.5)
-cat("=== Example 1: Small Effect Size ===\n")
-results1 <- plot_noncentral_t(n1 = 30, n2 = 30, s1 = 2, s2 = 2, 
-                                           delta = 0.5, xlim = c(-4, 4))
-
-# 예시 2: 중간 효과 크기 (delta = 1.0)
-cat("\n=== Example 2: Medium Effect Size ===\n")
-results2 <- plot_noncentral_t(n1 = 30, n2 = 30, s1 = 2, s2 = 2, 
-                                           delta = 1.0, xlim = c(-4, 4))
-
-# 예시 3: 큰 효과 크기 (delta = 2.0)
-cat("\n=== Example 3: Large Effect Size ===\n")
-results3 <- plot_noncentral_t(n1 = 30, n2 = 30, s1 = 2, s2 = 2, 
-                                           delta = 2.0, xlim = c(-4, 4))
-
-# 예시 4: 불균등 표본 크기와 분산
-cat("\n=== Example 4: Unequal Sample Sizes and Variances ===\n")
-results4 <- plot_noncentral_t(n1 = 20, n2 = 40, s1 = 3, s2 = 2, 
-                                           delta = 1.5, xlim = c(-4, 4))

@@ -5,7 +5,7 @@ library(tidyr)
 library(gridExtra)
 library(purrr)
 
-results <- readRDS("./study2/results2/S2befi50_E2.RDS")
+results <- readRDS("./study2/results2/S2befi100_E5.RDS")
 
 head(results)
 names(results)
@@ -27,15 +27,15 @@ for(i in 1:5) {
     ggplot(aes(x = t_value, fill = t_type, color = t_type)) +
     geom_density(alpha = 0.6, size = 0.8) +
     facet_wrap(~t_type, scales = "free", ncol = 3) +
-    labs(title = paste("Scenario", i, "- t값 표집분포"),
+    labs(title = paste("Condition", i, "- t-sampling distribution"),
          x = "t value",
          y = "Density") +
     theme_minimal() +
     theme(legend.position = "none",
           plot.title = element_text(hjust = 0.5, size = 12, face = "bold"),
           strip.text = element_text(size = 10, face = "bold")) +
-    scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73")) +
-    scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73"))
+    scale_fill_manual(values = c("#BDBDBD", "#08519C","#56B4E9")) +
+    scale_color_manual(values = c("#BDBDBD", "#08519C", "#56B4E9"))
   
   print(p)
 }
@@ -45,16 +45,16 @@ all_scenarios_plot <- results_long %>%
   ggplot(aes(x = t_value, fill = t_type, color = t_type)) +
   geom_density(alpha = 0.5, size = 0.8) +
   facet_grid(scenario ~ t_type, scales = "free",
-             labeller = labeller(scenario = function(x) paste("Scenario", x))) +
-  labs(title = "모든 시나리오별 t값 표집분포 비교",
+             labeller = labeller(scenario = function(x) paste("Condition", x))) +
+  labs(title = "t-sampling Distribution",
        x = "t value",
        y = "Density") +
   theme_minimal() +
   theme(legend.position = "bottom",
         plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
         strip.text = element_text(size = 9, face = "bold")) +
-  scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73")) +
-  scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73"))
+  scale_fill_manual(values = c("#BDBDBD", "#08519C","#56B4E9")) +
+  scale_color_manual(values = c("#BDBDBD", "#08519C", "#56B4E9"))
 
 print(all_scenarios_plot)
 
@@ -73,7 +73,7 @@ print(summary_stats)
 
 #### 이론적 분포 vs 표집분포 비교 시각화 ####
 
-results <- readRDS("./study2/results2/S2befi200_E8.RDS")
+results <- readRDS("./study2/results2/S2befi100_E5.RDS")
 # 필요한 함수들 로드 (제공된 함수들)
 source("./study2/t-distribution.R")  # 이론적 분포 함수들이 포함된 파일
 source("./study2/Behrens-Fisher_distribution.R")
@@ -101,7 +101,7 @@ scenario_params <- results %>%
 {cat("=== 시나리오별 모수 정보 ===\n")
 for(i in 1:5) {
   params <- scenario_params[[i]]
-  cat(sprintf("Scenario %d: n1=%d, n2=%d, s1=%.1f, s2=%.1f, pop_effect_size=%.2f, equal_var=%s\n", 
+  cat(sprintf("Condition %d: n1=%d, n2=%d, s1=%.1f, s2=%.1f, pop_effect_size=%.2f, equal_var=%s\n", 
               i, params$n1, params$n2, params$s1, params$s2, params$pop_effect_size, params$equal_var))
 }
 cat("\n")
@@ -201,7 +201,7 @@ create_comparison_plot <- function(scenario_num) {
     
     facet_wrap(~method, scales = "free", ncol = 3) +
     
-    labs(title = paste0("Scenario ", scenario_num, " - 이론적 분포 vs 표집분포 비교\n", 
+    labs(title = paste0("Condition ", scenario_num, " - Theoretical vs Sampling Distribution\n", 
                         theoretical$name),
          subtitle = paste0("Parameters: n1=", params$n1, ", n2=", params$n2,
                            ", s1=", params$s1, ", s2=", params$s2,
@@ -217,8 +217,8 @@ create_comparison_plot <- function(scenario_num) {
       strip.text = element_text(size = 10, face = "bold")
     ) +
     
-    scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73")) +
-    scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73"))
+    scale_fill_manual(values = c("#BDBDBD", "#08519C","#56B4E9")) +
+    scale_color_manual(values = c("#BDBDBD", "#08519C", "#56B4E9"))
   
   return(p)
 }
@@ -240,14 +240,14 @@ create_integrated_comparison <- function() {
                  names_to = "method", values_to = "t_value") %>%
     mutate(method = factor(method, 
                            levels = c("student_t", "welch_t", "bf_t"),
-                           labels = c("Student's t", "Welch's t", "Behrens-Fisher t")),
-           scenario = paste("Scenario", scenario))
+                           labels = c("Student's t", "Welch's t", "Behrens-Fisher")),
+           scenario = paste("Condition", scenario))
   
   # 각 시나리오별 이론적 분포 계산
   theoretical_data <- data.frame()
   
   for(s in 1:5) {
-    scenario_subset <- all_data %>% filter(scenario == paste("Scenario", s))
+    scenario_subset <- all_data %>% filter(scenario == paste("Condition", s))
     x_min <- min(scenario_subset$t_value, na.rm = TRUE)
     x_max <- max(scenario_subset$t_value, na.rm = TRUE)
     x_range <- seq(x_min - 0.5, x_max + 0.5, length.out = 200)
@@ -257,7 +257,7 @@ create_integrated_comparison <- function() {
     temp_df <- data.frame(
       x = x_range,
       density = theoretical$density,
-      scenario = paste("Scenario", s),
+      scenario = paste("Condition", s),
       dist_name = theoretical$name
     )
     
@@ -278,9 +278,9 @@ create_integrated_comparison <- function() {
     
     facet_grid(scenario ~ method, scales = "free") +
     
-    labs(title = paste0("전체 시나리오 비교: 이론적 분포 vs 표집분포(N=", 
+    labs(title = paste0("Total Conditions: Theoretical vs Empirical Distribution (N=", 
                         params$n1+params$n2,", δ=", params$pop_effect_size,")"),
-         subtitle = "검은 점선: 이론적 분포, 색깔 영역: 시뮬레이션 표집분포",
+         subtitle = "Black dash: theoretical distribution, Color areas: empirical distribution",
          x = "t value", 
          y = "Density") +
     
@@ -293,8 +293,8 @@ create_integrated_comparison <- function() {
       axis.text = element_text(size = 8)
     ) +
     
-    scale_fill_manual(values = c("#E69F00", "#56B4E9", "#009E73")) +
-    scale_color_manual(values = c("#E69F00", "#56B4E9", "#009E73"))
+    scale_fill_manual(values = c("#BDBDBD", "#08519C","#56B4E9")) +
+    scale_color_manual(values = c("#BDBDBD", "#08519C", "#56B4E9"))
   
   return(p)
 }
