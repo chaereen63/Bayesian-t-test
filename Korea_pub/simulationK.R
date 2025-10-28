@@ -13,10 +13,10 @@ start_dir  <- getwd()
 
 # Load the functions and settings
 source(file = file.path(home_dir, "./Korea_pub/functionsK.R"))
-settings <- readRDS(file = file.path(home_dir, "/Korea_pub/settingsNew.RDS")) #추가된 조건
+settings <- readRDS(file = file.path(home_dir, "/Korea_pub/settingsK30.RDS")) #추가된 조건
 
 print(head(settings))
-print(nrow(settings)) # 효과크기 조건이 빠졌으므로 15*500
+print(nrow(settings))
 
 tracker  <- "sim_loop"
 max_time <- 24.0  # Set maximum runtime in hours

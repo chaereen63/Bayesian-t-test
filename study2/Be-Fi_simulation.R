@@ -2,13 +2,13 @@ source("New/functionsN.R")
 library(tidyverse)
 library(asht)  # bfTest
 
-output_dir <- "./study2/results2"
-intermediate_dir <- file.path("D:S2befi_E8") #효과크기 별로 폴더 구분
+output_dir <- "./study2/results5"
+intermediate_dir <- file.path("D:S24results") #효과크기 별로 폴더 구분
 # 폴더 존재 확인
-if (!dir.exists("./study2/results2")) dir.create("./study2/results2", recursive = TRUE)
-if (!dir.exists("D:/S2befi_E8")) dir.create("D:/S2befi_E8", recursive = TRUE)
-dir.exists("./study2/results")
-dir.exists("D:/S2results_E8")
+if (!dir.exists("./study2/results4")) dir.create("./study2/results5", recursive = TRUE)
+if (!dir.exists("D:/S24results")) dir.create("D:/S24results", recursive = TRUE)
+dir.exists("./study2/results5")
+dir.exists("D:/S24results")
 
 # 시나리오 설정 및 복제본 생성을 위한 통합 함수
 create_settings <- function(var1, var2, effect_size, n1, n2, replications = 50000) {
@@ -45,13 +45,13 @@ create_settings <- function(var1, var2, effect_size, n1, n2, replications = 5000
   )
 }
 
-# 각 시나리오 설정 생성
+# 각 시나리오 설정 생성(60, 120, 240)
 scenarios_config <- list(
-  list(var1 = 4, var2 = 4, n1 = 100, n2 = 100, scenario = 1),
-  list(var1 = 4, var2 = 4, n1 = 80, n2 = 120, scenario = 2),
-  list(var1 = 4, var2 = 2, n1 = 100, n2 = 100, scenario = 3),
-  list(var1 = 4, var2 = 2, n1 = 80, n2 = 120, scenario = 4),
-  list(var1 = 4, var2 = 2, n1 = 120, n2 = 80, scenario = 5)
+  list(var1 = 4, var2 = 4, n1 = 120, n2 = 120, scenario = 1),
+  list(var1 = 4, var2 = 4, n1 = 144, n2 = 96, scenario = 2),
+  list(var1 = 4, var2 = 2, n1 = 120, n2 = 120, scenario = 3),
+  list(var1 = 4, var2 = 2, n1 = 144, n2 = 96, scenario = 4),
+  list(var1 = 4, var2 = 2, n1 = 96, n2 = 144, scenario = 5)
 )
 
 # 시뮬레이션 함수 (메모리 효율적) - bfTest 추가로 수정됨
@@ -289,128 +289,18 @@ run_full_simulation <- function(effect_size = 0, replications = 50000,
   return(final_results)
 }
 
-# Rejection rate 및 효과크기 분석 함수 (bfTest 결과 추가)
-analyze_simulation_results <- function(results) {
-  
-  # rejection rate 분석 (bfTest 추가)
-  reject_summary <- results %>%
-    group_by(scenario, n1, n2, var1, var2, sd1, sd2, pop_effect_size) %>%
-    summarise(
-      # Rejection rates (bfTest 추가)
-      student_reject = mean(student_p < 0.05, na.rm = TRUE),
-      welch_reject = mean(welch_p < 0.05, na.rm = TRUE),
-      bf_reject = mean(bf_p < 0.05, na.rm = TRUE),  # bfTest rejection rate 추가
-      
-      # Rejection rate 신뢰구간 (bfTest 추가)
-      student_reject_se = sqrt(student_reject * (1 - student_reject) / n()),
-      welch_reject_se = sqrt(welch_reject * (1 - welch_reject) / n()),
-      bf_reject_se = sqrt(bf_reject * (1 - bf_reject) / n()),  # bfTest SE 추가
-      
-      # 효과크기 요약 통계
-      mean_cohens_d = mean(cohens_d, na.rm = TRUE),
-      sd_cohens_d = sd(cohens_d, na.rm = TRUE),
-      mean_hedges_g = mean(hedges_g, na.rm = TRUE),
-      sd_hedges_g = sd(hedges_g, na.rm = TRUE),
-      
-      # t-통계량 요약 (bfTest 추가)
-      mean_student_t = mean(student_t, na.rm = TRUE),
-      sd_student_t = sd(student_t, na.rm = TRUE),
-      mean_welch_t = mean(welch_t, na.rm = TRUE),
-      sd_welch_t = sd(welch_t, na.rm = TRUE),
-      mean_bf_t = mean(bf_t, na.rm = TRUE),  # bfTest t 통계량 평균
-      sd_bf_t = sd(bf_t, na.rm = TRUE),      # bfTest t 통계량 표준편차
-      
-      # 자유도 및 R 값
-      student_df = first(student_df),
-      welch_df = first(welch_df),
-      mean_bf_R = mean(bf_R, na.rm = TRUE),  # bfTest R 값 평균
-      sd_bf_R = sd(bf_R, na.rm = TRUE),      # bfTest R 값 표준편차
-      
-      # 표본 크기
-      n_sims = n(),
-      .groups = 'drop'
-    ) %>%
-    mutate(
-      # 신뢰구간 계산 (bfTest 추가)
-      student_reject_ci_lower = pmax(0, student_reject - 1.96 * student_reject_se),
-      student_reject_ci_upper = pmin(1, student_reject + 1.96 * student_reject_se),
-      welch_reject_ci_lower = pmax(0, welch_reject - 1.96 * welch_reject_se),
-      welch_reject_ci_upper = pmin(1, welch_reject + 1.96 * welch_reject_se),
-      bf_reject_ci_lower = pmax(0, bf_reject - 1.96 * bf_reject_se),      # bfTest CI
-      bf_reject_ci_upper = pmin(1, bf_reject + 1.96 * bf_reject_se)       # bfTest CI
-    )
-  
-  return(reject_summary)
-}
-
-# 효과크기 분포 분석 함수는 동일
-analyze_effect_size_distribution <- function(results) {
-  effect_size_summary <- results %>%
-    group_by(scenario, pop_effect_size) %>%
-    summarise(
-      # Cohen's d 분포
-      cohens_d_mean = mean(cohens_d, na.rm = TRUE),
-      cohens_d_median = median(cohens_d, na.rm = TRUE),
-      cohens_d_sd = sd(cohens_d, na.rm = TRUE),
-      cohens_d_q25 = quantile(cohens_d, 0.25, na.rm = TRUE),
-      cohens_d_q75 = quantile(cohens_d, 0.75, na.rm = TRUE),
-      
-      # Hedges' g 분포  
-      hedges_g_mean = mean(hedges_g, na.rm = TRUE),
-      hedges_g_median = median(hedges_g, na.rm = TRUE),
-      hedges_g_sd = sd(hedges_g, na.rm = TRUE),
-      
-      # 효과크기의 정확도 (bias)
-      cohens_d_bias = cohens_d_mean - first(pop_effect_size),
-      hedges_g_bias = hedges_g_mean - first(pop_effect_size),
-      
-      # 효과크기 추정의 정밀도 (precision)  
-      cohens_d_rmse = sqrt(mean((cohens_d - first(pop_effect_size))^2, na.rm = TRUE)),
-      hedges_g_rmse = sqrt(mean((hedges_g - first(pop_effect_size))^2, na.rm = TRUE)),
-      
-      .groups = 'drop'
-    )
-  
-  return(effect_size_summary)
-}
 
 # 실행
 cat("simulation")
 results <- run_full_simulation(
-  effect_size = 0.8, # 효과크기 조건에 맞게 수정 
+  effect_size = 0.0, # 효과크기 조건에 맞게 수정 
   replications = 30000,
-  output_file = file.path(output_dir, "S2befi200_E8.RDS"), #파일명 수정
+  output_file = file.path(output_dir, "S24results240_E0.RDS"), #파일명 수정
   save_intermediate = TRUE,
   intermediate_dir = intermediate_dir
-)
+) 
 
-#### 분석 ####
-# 대략적인 내용 및 결측치 확인
+ # 대략적인 내용 및 결측치 확인
 print(results)
 names(results)
 sum(is.na(results))
-
-# rejection rate 분석
-reject_analysis <- analyze_simulation_results(results)
-
-# 결과를 전치하여 보기 좋게 만드는 함수
-transpose_results <- function(reject_analysis) {
-  
-  # 시나리오별로 열을 만들고 변수명을 행으로
-  transposed <- reject_analysis %>%
-    # 시나리오를 기준으로 열 만들기
-    pivot_longer(cols = -scenario, names_to = "variable", values_to = "value") %>%
-    pivot_wider(names_from = scenario, values_from = value, names_prefix = "Scenario_") %>%
-    # 변수명을 첫 번째 열로
-    relocate(variable, .before = everything())
-  
-  return(transposed)
-}
-
-reject_analysis_t <- transpose_results(reject_analysis)
-print(reject_analysis_t, n = Inf)  # 모든 행 출력
-
-# 효과크기 분포 분석
-effect_size_analysis <- analyze_effect_size_distribution(results)
-effect_size_t <- transpose_results(effect_size_analysis)
-print(effect_size_t, n=Inf)

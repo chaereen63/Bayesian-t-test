@@ -6,7 +6,7 @@ library(ggplot2)
 library(purrr)
 library(moments)  # For skewness and kurtosis calculation
 
-results <- readRDS("./study2/results2/S2befi200_E8.RDS")
+results <- readRDS("./study2/results4/S23results60_E0.RDS")
 # Load necessary functions
 source("./study2/t-distribution.R")  # File containing theoretical distribution functions
 source("./study2/Behrens-Fisher_distribution.R")
@@ -73,8 +73,8 @@ for(i in 1:5) {
 }
 
 # Save descriptive statistics
-write.csv(descriptive_stats, "./study2/results2/descriptive_stats.csv", row.names = FALSE)
-cat("Descriptive statistics saved to './study2/results2/descriptive_stats.csv'\n\n")
+write.csv(descriptive_stats, "./study2/results3/descriptive_stats.csv", row.names = FALSE)
+cat("Descriptive statistics saved to './study2/results3/descriptive_stats.csv'\n\n")
 
 #### Function to Calculate Theoretical Distribution ####
 calculate_theoretical_distribution <- function(condition, x_range) {
@@ -190,8 +190,8 @@ create_comparison_plot <- function(condition_num) {
       panel.background = element_rect(fill = "white", color = NA)
     )+
     
-    scale_fill_manual(values = c("#08519C", "#BDBDBD")) +
-    scale_color_manual(values = c("#08519C", "#BDBDBD"))
+    scale_fill_manual(values = c("#FFA500", "#0066CC")) +
+    scale_color_manual(values = c("#FFA500", "#0066CC"))
   
   return(p)
 }
@@ -269,8 +269,8 @@ create_integrated_comparison <- function() {
       panel.background = element_rect(fill = "white", color = NA)
     )+
     
-    scale_fill_manual(values = c("#08519C", "#BDBDBD")) +
-    scale_color_manual(values = c("#08519C", "#BDBDBD"))
+    scale_fill_manual(values = c("#FFA500", "#0066CC")) +
+    scale_color_manual(values = c("#FFA500", "#0066CC"))
   
   return(p)
 }
@@ -280,7 +280,7 @@ integrated_plot <- create_integrated_comparison()
 print(integrated_plot)
 
 ggsave(
-  filename = "./study2/results2/allc_200_8.png",
+  filename = "./study2/results3/allc_60_0.png",
   plot = integrated_plot,
   width = 11,
   height = 8,
@@ -351,8 +351,8 @@ create_direct_overlay_plot <- function(condition_num) {
       panel.background = element_rect(fill = "white", color = NA)
     ) +
     
-    scale_fill_manual(values = c("#08519C", "#BDBDBD")) +
-    scale_color_manual(values = c("#08519C", "#BDBDBD"))
+    scale_fill_manual(values = c("#FFA500", "#0066CC")) +
+    scale_color_manual(values = c("#FFA500", "#0066CC"))
   
   return(p)
 }
@@ -362,7 +362,7 @@ for(i in 4:5) {
   p <- create_direct_overlay_plot(i)
   print(p)
   ggsave(
-    filename = paste0("./study2/results2/condition_", i, "_overlay.png"),
+    filename = paste0("./study2/results3/condition_", i, "_overlay.png"),
     plot = p,
     width = 8,
     height = 5,
@@ -485,3 +485,244 @@ ggsave(
 )
 
 cat("\nWelch's t comparison plot for Conditions 4 and 5 saved!\n")
+
+#### Simulation Results Line Plot (By Sample Size) ####
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(cowplot)
+
+# 시뮬레이션 데이터
+sim_data_line <- data.frame(
+  Condition = rep(c("A", "B", "C", "D", "E"), each = 18),
+  N = rep(rep(c(60, 120, 240), each = 6), times = 5),
+  d = rep(rep(c(0.2, 0.5, 0.8), each = 2), times = 15),
+  test = rep(c("Student's t-test", "Welch's t-test"), times = 45),
+  power = c(
+    # Condition A (n2/n1 = 1, rho = 1)
+    # N=60
+    0.119, 0.119, 0.475, 0.474, 0.862, 0.862,
+    # N=120
+    0.194, 0.194, 0.777, 0.777, 0.992, 0.992,
+    # N=240
+    0.334, 0.333, 0.972, 0.972, 1, 1,
+    
+    # Condition B (n2/n1 = 1, rho = 2)
+    # N=60
+    0.119, 0.118, 0.479, 0.477, 0.858, 0.857,
+    # N=120
+    0.191, 0.19, 0.773, 0.773, 0.991, 0.991,
+    # N=240
+    0.339, 0.338, 0.97, 0.97, 1, 1,
+    
+    # Condition C (n2/n1 = 1/3, rho = 1)
+    # N=60
+    0.101, 0.098, 0.377, 0.364, 0.757, 0.736,
+    # N=120
+    0.157, 0.155, 0.648, 0.638, 0.964, 0.96,
+    # N=240
+    0.264, 0.263, 0.915, 0.911, 1, 1,
+    
+    # Condition D (n2/n1 = 1/3, rho = 2)
+    # N=60
+    0.056, 0.112, 0.305, 0.434, 0.711, 0.813,
+    # N=120
+    0.099, 0.179, 0.598, 0.722, 0.964, 0.983,
+    # N=240
+    0.196, 0.307, 0.911, 0.954, 1, 1,
+    
+    # Condition E (n2/n1 = 3, rho = 2)
+    # N=60
+    0.159, 0.091, 0.459, 0.322, 0.785, 0.655,
+    # N=120
+    0.224, 0.138, 0.701, 0.571, 0.967, 0.929,
+    # N=240
+    0.341, 0.232, 0.922, 0.863, 0.999, 0.999
+  )
+)
+
+# 그룹 변수 생성
+sim_data_line$group <- paste(sim_data_line$test, sim_data_line$d, sep = "_")
+
+# 패널 생성 함수
+create_line_panel <- function(data, N_value, show_y_label = FALSE) {
+  subset_data <- data[data$N == N_value, ]
+  
+  p <- ggplot(subset_data, aes(x = Condition, y = power, 
+                               color = test,
+                               linetype = test,
+                               shape = factor(d),
+                               group = group)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2.5, stroke = 0.8) +
+    scale_color_manual(values = c("Student's t-test" = "#FFA500", 
+                                  "Welch's t-test" = "#0066CC"),
+                       name = "Method") +
+    scale_linetype_manual(values = c("Student's t-test" = "longdash",
+                                     "Welch's t-test" = "solid"),
+                          name = "Method") +
+    scale_shape_manual(values = c("0.2" = 16, "0.5" = 15, "0.8" = 17),
+                       name = "Effect Size",
+                       labels = c("d=0.2", "d=0.5", "d=0.8")) +
+    labs(title = bquote(bold("N = " ~ .(N_value))),
+         x = "",
+         y = if(show_y_label) "Power" else "") +
+    scale_y_continuous(breaks = seq(0, 1, 0.2), limits = c(0, 1.05)) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 13, face = "bold"),
+      axis.title = element_text(size = 12),
+      axis.title.y = element_text(size = if(show_y_label) 12 else 0),
+      axis.text = element_text(size = 11),
+      legend.position = "none",
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor = element_blank()
+    )
+  
+  return(p)
+}
+
+# 3개 패널 생성 (첫 번째만 y축 라벨)
+panel_N60 <- create_line_panel(sim_data_line, 60, show_y_label = TRUE)
+panel_N120 <- create_line_panel(sim_data_line, 120, show_y_label = FALSE)
+panel_N240 <- create_line_panel(sim_data_line, 240, show_y_label = FALSE)
+
+# 범례 생성
+legend_plot <- ggplot(legend_data, aes(x = x, y = y, 
+                                       color = test,
+                                       linetype = test,
+                                       shape = factor(d),
+                                       group = group)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 2.5, stroke = 0.8) +
+  scale_color_manual(values = c("Student's t-test" = "#FFA500", 
+                                "Welch's t-test" = "#0066CC"),
+                     name = "Method") +
+  scale_linetype_manual(values = c("Student's t-test" = "longdash",
+                                   "Welch's t-test" = "solid"),
+                        name = "Method") +
+  scale_shape_manual(values = c("0.2" = 16, "0.5" = 15, "0.8" = 17),
+                     name = "Effect Size",
+                     labels = c("d=0.2", "d=0.5", "d=0.8")) +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        legend.box = "horizontal",
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 11, face = "bold"))
+
+legend <- get_legend(legend_plot)
+
+# 1×3 가로 배치
+combined_plot <- grid.arrange(
+  panel_N60, panel_N120, panel_N240,
+  ncol = 3,
+  bottom = textGrob("Condition\n", gp = gpar(fontsize = 12))
+)
+print(combined_plot)
+
+# 저장
+ggsave("simulation_results_lineplotre.png", combined_plot, width = 10, height = 5, dpi = 600)
+
+#### Type I Error Rate Line Plot (d=0) ####
+# Type I error 데이터 (d=0)
+type1_data <- data.frame(
+  Condition = rep(c("A", "B", "C", "D", "E"), each = 6),
+  N = rep(rep(c(60, 120, 240), each = 2), times = 5),
+  test = rep(c("Student's t-test", "Welch's t-test"), times = 15),
+  error_rate = c(
+    # Condition A
+    0.05, 0.05, 0.051, 0.051, 0.049, 0.049,
+    # Condition B
+    0.05, 0.05, 0.049, 0.048, 0.053, 0.053,
+    # Condition C
+    0.051, 0.053, 0.049, 0.049, 0.052, 0.052,
+    # Condition D
+    0.021, 0.05, 0.021, 0.052, 0.02, 0.049,
+    # Condition E
+    0.097, 0.052, 0.096, 0.05, 0.097, 0.048
+  )
+)
+
+# 그룹 변수 생성
+type1_data$group <- paste(type1_data$test, type1_data$N, sep = "_")
+
+# 패널 생성 함수
+create_type1_panel <- function(data, N_value, show_y_label = FALSE) {
+  subset_data <- data[data$N == N_value, ]
+  
+  p <- ggplot(subset_data, aes(x = Condition, y = error_rate, 
+                               color = test,
+                               linetype = test,
+                               group = test)) +
+    geom_line(linewidth = 0.8) +
+    geom_point(size = 2.5, stroke = 0.8, shape = 16) +
+    geom_hline(yintercept = 0.05, linetype = "dotted", color = "red", linewidth = 0.5) +
+    scale_color_manual(values = c("Student's t-test" = "#FFA500", 
+                                  "Welch's t-test" = "#0066CC"),
+                       name = "Method") +
+    scale_linetype_manual(values = c("Student's t-test" = "longdash",
+                                     "Welch's t-test" = "solid"),
+                          name = "Method") +
+    labs(title = bquote(bold("N = " ~ .(N_value))),
+         x = "",
+         y = if(show_y_label) "Type I Error Rate" else "") +
+    scale_y_continuous(breaks = seq(0, 0.1, 0.02), limits = c(0, 0.1)) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5, size = 13, face = "bold"),
+      axis.title = element_text(size = 12),
+      axis.title.y = element_text(size = if(show_y_label) 12 else 0),
+      axis.text = element_text(size = 11),
+      legend.position = "none",
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor = element_blank()
+    )
+  
+  return(p)
+}
+
+# 3개 패널 생성
+panel_N60 <- create_type1_panel(type1_data, 60, show_y_label = TRUE)
+panel_N120 <- create_type1_panel(type1_data, 120, show_y_label = FALSE)
+panel_N240 <- create_type1_panel(type1_data, 240, show_y_label = FALSE)
+
+# 범례 생성
+legend_data <- data.frame(
+  x = c(1, 2, 1, 2),
+  y = c(1, 1, 2, 2),
+  test = rep(c("Student's t-test", "Welch's t-test"), 2)
+)
+
+legend_data$group <- legend_data$test
+
+legend_plot <- ggplot(legend_data, aes(x = x, y = y, 
+                                       color = test,
+                                       linetype = test,
+                                       group = test)) +
+  geom_line(linewidth = 0.8) +
+  geom_point(size = 2.5, stroke = 0.8, shape = 16) +
+  scale_color_manual(values = c("Student's t-test" = "#FFA500", 
+                                "Welch's t-test" = "#0066CC"),
+                     name = "Method") +
+  scale_linetype_manual(values = c("Student's t-test" = "longdash",
+                                   "Welch's t-test" = "solid"),
+                        name = "Method") +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        legend.box = "horizontal",
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 11, face = "bold"))
+
+legend <- get_legend(legend_plot)
+
+# 최종 결합
+combined_plot <- grid.arrange(
+  panel_N60, panel_N120, panel_N240,
+  ncol = 3,
+  bottom = textGrob("Condition\n", gp = gpar(fontsize = 12))
+)
+
+# 범례 포함하여 저장
+g <- arrangeGrob(combined_plot, legend, ncol = 1, heights = c(0.9, 0.1))
+print(g)
+ggsave("type1_error_lineplot_ree.png", g, width = 10, height = 5, dpi = 600)

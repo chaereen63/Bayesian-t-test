@@ -1,79 +1,129 @@
-#### Be-Fi simulation 통계량 시각화 ####
-library(ggplot2)
 library(dplyr)
 library(tidyr)
 library(gridExtra)
 library(purrr)
+library(ggplot2)
 
-results <- readRDS("./study2/results2/S2befi100_E5.RDS")
-
+#### Analysis ####
+results <- readRDS("./study2/results5/S24results240_E8.RDS")
 head(results)
 names(results)
 
-# 데이터를 long format으로 변환
-results_long <- results %>%
-  select(scenario, student_t, welch_t, bf_t) %>%
-  pivot_longer(cols = c(student_t, welch_t, bf_t),
-               names_to = "t_type",
-               values_to = "t_value") %>%
-  mutate(t_type = factor(t_type, 
-                         levels = c("student_t", "welch_t", "bf_t"),
-                         labels = c("Student's t", "Welch's t", "Behrens-Fisher t")))
-
-# 시나리오별로 각각 개별 플롯 생성하기
-for(i in 1:5) {
-  p <- results_long %>%
-    filter(scenario == i) %>%
-    ggplot(aes(x = t_value, fill = t_type, color = t_type)) +
-    geom_density(alpha = 0.6, size = 0.8) +
-    facet_wrap(~t_type, scales = "free", ncol = 3) +
-    labs(title = paste("Condition", i, "- t-sampling distribution"),
-         x = "t value",
-         y = "Density") +
-    theme_minimal() +
-    theme(legend.position = "none",
-          plot.title = element_text(hjust = 0.5, size = 12, face = "bold"),
-          strip.text = element_text(size = 10, face = "bold")) +
-    scale_fill_manual(values = c("#BDBDBD", "#08519C","#56B4E9")) +
-    scale_color_manual(values = c("#BDBDBD", "#08519C", "#56B4E9"))
+# analysis
+# Rejection rate
+analyze_simulation_results <- function(results) {
   
-  print(p)
+  # rejection rate 분석 (bfTest 추가)
+  reject_summary <- results %>%
+    group_by(scenario, n1, n2, var1, var2, sd1, sd2, pop_effect_size) %>%
+    summarise(
+      # Rejection rates (bfTest 추가)
+      student_reject = mean(student_p < 0.05, na.rm = TRUE),
+      welch_reject = mean(welch_p < 0.05, na.rm = TRUE),
+      bf_reject = mean(bf_p < 0.05, na.rm = TRUE),  # bfTest rejection rate 추가
+      
+      # Rejection rate 신뢰구간 (bfTest 추가)
+      student_reject_se = sqrt(student_reject * (1 - student_reject) / n()),
+      welch_reject_se = sqrt(welch_reject * (1 - welch_reject) / n()),
+      bf_reject_se = sqrt(bf_reject * (1 - bf_reject) / n()),  # bfTest SE 추가
+      
+      # 효과크기 요약 통계
+      mean_cohens_d = mean(cohens_d, na.rm = TRUE),
+      sd_cohens_d = sd(cohens_d, na.rm = TRUE),
+      mean_hedges_g = mean(hedges_g, na.rm = TRUE),
+      sd_hedges_g = sd(hedges_g, na.rm = TRUE),
+      
+      # t-통계량 요약 (bfTest 추가)
+      mean_student_t = mean(student_t, na.rm = TRUE),
+      sd_student_t = sd(student_t, na.rm = TRUE),
+      mean_welch_t = mean(welch_t, na.rm = TRUE),
+      sd_welch_t = sd(welch_t, na.rm = TRUE),
+      mean_bf_t = mean(bf_t, na.rm = TRUE),  # bfTest t 통계량 평균
+      sd_bf_t = sd(bf_t, na.rm = TRUE),      # bfTest t 통계량 표준편차
+      
+      # 자유도 및 R 값
+      student_df = first(student_df),
+      welch_df = first(welch_df),
+      mean_bf_R = mean(bf_R, na.rm = TRUE),  # bfTest R 값 평균
+      sd_bf_R = sd(bf_R, na.rm = TRUE),      # bfTest R 값 표준편차
+      
+      # 표본 크기
+      n_sims = n(),
+      .groups = 'drop'
+    ) %>%
+    mutate(
+      # 신뢰구간 계산 (bfTest 추가)
+      student_reject_ci_lower = pmax(0, student_reject - 1.96 * student_reject_se),
+      student_reject_ci_upper = pmin(1, student_reject + 1.96 * student_reject_se),
+      welch_reject_ci_lower = pmax(0, welch_reject - 1.96 * welch_reject_se),
+      welch_reject_ci_upper = pmin(1, welch_reject + 1.96 * welch_reject_se),
+      bf_reject_ci_lower = pmax(0, bf_reject - 1.96 * bf_reject_se),      # bfTest CI
+      bf_reject_ci_upper = pmin(1, bf_reject + 1.96 * bf_reject_se)       # bfTest CI
+    )
+  
+  return(reject_summary)
 }
 
-# 또는 모든 시나리오를 하나의 플롯에 표시 (선택사항)
-all_scenarios_plot <- results_long %>%
-  ggplot(aes(x = t_value, fill = t_type, color = t_type)) +
-  geom_density(alpha = 0.5, size = 0.8) +
-  facet_grid(scenario ~ t_type, scales = "free",
-             labeller = labeller(scenario = function(x) paste("Condition", x))) +
-  labs(title = "t-sampling Distribution",
-       x = "t value",
-       y = "Density") +
-  theme_minimal() +
-  theme(legend.position = "bottom",
-        plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
-        strip.text = element_text(size = 9, face = "bold")) +
-  scale_fill_manual(values = c("#BDBDBD", "#08519C","#56B4E9")) +
-  scale_color_manual(values = c("#BDBDBD", "#08519C", "#56B4E9"))
+# effect size
+analyze_effect_size_distribution <- function(results) {
+  effect_size_summary <- results %>%
+    group_by(scenario, pop_effect_size) %>%
+    summarise(
+      # Cohen's d 분포
+      cohens_d_mean = mean(cohens_d, na.rm = TRUE),
+      cohens_d_median = median(cohens_d, na.rm = TRUE),
+      cohens_d_sd = sd(cohens_d, na.rm = TRUE),
+      cohens_d_q25 = quantile(cohens_d, 0.25, na.rm = TRUE),
+      cohens_d_q75 = quantile(cohens_d, 0.75, na.rm = TRUE),
+      
+      # Hedges' g 분포  
+      hedges_g_mean = mean(hedges_g, na.rm = TRUE),
+      hedges_g_median = median(hedges_g, na.rm = TRUE),
+      hedges_g_sd = sd(hedges_g, na.rm = TRUE),
+      
+      # 효과크기의 정확도 (bias)
+      cohens_d_bias = cohens_d_mean - first(pop_effect_size),
+      hedges_g_bias = hedges_g_mean - first(pop_effect_size),
+      
+      # 효과크기 추정의 정밀도 (precision)  
+      cohens_d_rmse = sqrt(mean((cohens_d - first(pop_effect_size))^2, na.rm = TRUE)),
+      hedges_g_rmse = sqrt(mean((hedges_g - first(pop_effect_size))^2, na.rm = TRUE)),
+      
+      .groups = 'drop'
+    )
+  
+  return(effect_size_summary)
+}
 
-print(all_scenarios_plot)
+reject_analysis <- analyze_simulation_results(results)
 
-# 기본 통계량 출력
-summary_stats <- results_long %>%
-  group_by(scenario, t_type) %>%
-  summarise(
-    mean = mean(t_value, na.rm = TRUE),
-    sd = sd(t_value, na.rm = TRUE),
-    median = median(t_value, na.rm = TRUE),
-    .groups = 'drop'
-  )
+# 결과 전치
+transpose_results <- function(reject_analysis) {
+  
+  # 시나리오별로 열을 만들고 변수명을 행으로
+  transposed <- reject_analysis %>%
+    # 시나리오를 기준으로 열 만들기
+    pivot_longer(cols = -scenario, names_to = "variable", values_to = "value") %>%
+    pivot_wider(names_from = scenario, values_from = value, names_prefix = "Scenario_") %>%
+    # 변수명을 첫 번째 열로
+    relocate(variable, .before = everything())
+  
+  return(transposed)
+}
 
-print("각 시나리오별 t값 기본 통계량:")
-print(summary_stats)
+reject_analysis_t <- transpose_results(reject_analysis)
+reject_analysis_t <- reject_analysis_t %>%
+  mutate(across(where(is.numeric), ~round(.x, 3)))
+print(reject_analysis_t, n = Inf)
+
+# 효과크기 분포 분석
+effect_size_analysis <- analyze_effect_size_distribution(results)
+effect_size_t <- transpose_results(effect_size_analysis)
+
+print(effect_size_t, n=Inf)
+
 
 #### 이론적 분포 vs 표집분포 비교 시각화 ####
-
-results <- readRDS("./study2/results2/S2befi100_E5.RDS")
 # 필요한 함수들 로드 (제공된 함수들)
 source("./study2/t-distribution.R")  # 이론적 분포 함수들이 포함된 파일
 source("./study2/Behrens-Fisher_distribution.R")

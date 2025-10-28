@@ -17,7 +17,7 @@ n100es5 <- n100es5 %>%
     scenario == 3 ~ "C",
     scenario == 4 ~ "D",
     scenario == 5 ~ "E",
-    TRUE ~ paste("시나리오", scenario)
+    TRUE ~ paste("Condition", scenario)
   ))
 print(n100es5)
 
