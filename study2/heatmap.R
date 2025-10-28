@@ -200,7 +200,40 @@ p1 <- ggplot(power_grid, aes(x = kappa, y = rho, z = power)) +
 
 print(p1)
 
-# 3D surface plot (plotly 사용)
-# install.packages("plotly") 필요
-# library(plotly)
-# plot_ly(power_grid, x = ~kappa, y = ~rho, z = ~power, type = "surface")
+# special condition points
+special_points <- data.frame(
+  kappa = c(1, 1/2, 1/3, 2/3),
+  rho = c(1, 1/2, 1/2, 1/2),
+  label = c("Reference", "Condition 1", "Condition 2", "Condition 3"),
+  color = c("red", "black", "black", "black")
+)
+
+# Contour plot
+p2 <- ggplot(power_grid, aes(x = kappa, y = rho, z = power)) +
+  geom_contour_filled(bins = 20) +
+  geom_contour(color = "white", alpha = 0.3, bins = 20) +
+  scale_fill_viridis_d(option = "plasma", name = "Power") +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "white", alpha = 0.5) +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "white", alpha = 0.5) +
+  # add special points
+  geom_point(data = special_points, 
+             aes(x = kappa, y = rho, color = color),
+             size = 1.5, shape = 16, inherit.aes = FALSE) +
+  geom_text(data = special_points,
+            aes(x = kappa, y = rho, label = paste0(round(kappa, 1))),
+            vjust = 2, size = 2.3, color = "black",
+            inherit.aes = FALSE) +
+  scale_color_identity() +  # color를 직접 지정
+  labs(title = bquote("Welch's t-test Power: N=" ~ .(N) ~ ", d=" ~ .(d)),
+       x = bquote(kappa == n[2]/n[1]),
+       y = bquote(rho == sigma[2]^2/sigma[1]^2)) +
+  guides(fill = guide_legend(reverse = TRUE)) +  # legend
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+    axis.title = element_text(size = 12),
+    legend.position = "right"
+  )
+print(p2)
+
+ggsave("./study2/heatmap.png", p2, width = 8,height = 6,dpi=600)
