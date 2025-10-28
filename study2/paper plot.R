@@ -492,82 +492,111 @@ library(gridExtra)
 library(grid)
 library(cowplot)
 
-# 시뮬레이션 데이터
+# 새로운 시뮬레이션 데이터 (d=0 제외)
 sim_data_line <- data.frame(
   Condition = rep(c("A", "B", "C", "D", "E"), each = 18),
   N = rep(rep(c(60, 120, 240), each = 6), times = 5),
   d = rep(rep(c(0.2, 0.5, 0.8), each = 2), times = 15),
   test = rep(c("Student's t-test", "Welch's t-test"), times = 45),
   power = c(
-    # Condition A (n2/n1 = 1, rho = 1)
+    # Condition A (variance ratio = 1, sample ratio = 1:1)
     # N=60
-    0.119, 0.119, 0.475, 0.474, 0.862, 0.862,
+    0.118, 0.117, 0.482, 0.482, 0.865, 0.864,
     # N=120
-    0.194, 0.194, 0.777, 0.777, 0.992, 0.992,
+    0.189, 0.189, 0.775, 0.775, 0.992, 0.992,
     # N=240
-    0.334, 0.333, 0.972, 0.972, 1, 1,
+    0.337, 0.337, 0.97, 0.97, 1, 1,
     
-    # Condition B (n2/n1 = 1, rho = 2)
+    # Condition B (variance ratio = 0.5, sample ratio = 1:1)
     # N=60
-    0.119, 0.118, 0.479, 0.477, 0.858, 0.857,
+    0.119, 0.118, 0.481, 0.479, 0.862, 0.861,
     # N=120
-    0.191, 0.19, 0.773, 0.773, 0.991, 0.991,
+    0.196, 0.195, 0.779, 0.778, 0.992, 0.992,
     # N=240
-    0.339, 0.338, 0.97, 0.97, 1, 1,
+    0.337, 0.337, 0.972, 0.972, 1, 1,
     
-    # Condition C (n2/n1 = 1/3, rho = 1)
+    # Condition C (variance ratio = 1, sample ratio = 2:1)
     # N=60
-    0.101, 0.098, 0.377, 0.364, 0.757, 0.736,
+    0.11, 0.109, 0.438, 0.431, 0.822, 0.813,
     # N=120
-    0.157, 0.155, 0.648, 0.638, 0.964, 0.96,
+    0.176, 0.175, 0.725, 0.721, 0.985, 0.984,
     # N=240
-    0.264, 0.263, 0.915, 0.911, 1, 1,
+    0.308, 0.307, 0.954, 0.953, 1, 1,
     
-    # Condition D (n2/n1 = 1/3, rho = 2)
+    # Condition D (variance ratio = 0.5, sample ratio = 2:1)
     # N=60
-    0.056, 0.112, 0.305, 0.434, 0.711, 0.813,
+    0.08, 0.121, 0.388, 0.473, 0.802, 0.862,
     # N=120
-    0.099, 0.179, 0.598, 0.722, 0.964, 0.983,
+    0.138, 0.195, 0.703, 0.775, 0.984, 0.991,
     # N=240
-    0.196, 0.307, 0.911, 0.954, 1, 1,
+    0.259, 0.338, 0.953, 0.972, 1, 1,
     
-    # Condition E (n2/n1 = 3, rho = 2)
+    # Condition E (variance ratio = 0.5, sample ratio = 1:2)
     # N=60
-    0.159, 0.091, 0.459, 0.322, 0.785, 0.655,
+    0.152, 0.103, 0.484, 0.389, 0.835, 0.761,
     # N=120
-    0.224, 0.138, 0.701, 0.571, 0.967, 0.929,
+    0.22, 0.162, 0.752, 0.672, 0.985, 0.972,
     # N=240
-    0.341, 0.232, 0.922, 0.863, 0.999, 0.999
+    0.358, 0.282, 0.954, 0.929, 1, 1
   )
 )
 
 # 그룹 변수 생성
 sim_data_line$group <- paste(sim_data_line$test, sim_data_line$d, sep = "_")
 
+# 배경선: Welch의 A, C만
+background_data <- sim_data_line[sim_data_line$Condition %in% c("A", "C") & 
+                                   sim_data_line$test == "Welch's t-test", ]
+
+# 강조선: D, E
+highlight_data <- sim_data_line[sim_data_line$Condition %in% c("D", "E"), ]
+
 # 패널 생성 함수
-create_line_panel <- function(data, N_value, show_y_label = FALSE) {
-  subset_data <- data[data$N == N_value, ]
+create_line_panel <- function(bg_data, hl_data, N_value, show_y_label = FALSE) {
+  bg_subset <- bg_data[bg_data$N == N_value, ]
+  hl_subset <- hl_data[hl_data$N == N_value, ]
   
-  p <- ggplot(subset_data, aes(x = Condition, y = power, 
-                               color = test,
-                               linetype = test,
-                               shape = factor(d),
-                               group = group)) +
-    geom_line(linewidth = 0.8) +
-    geom_point(size = 2.5, stroke = 0.8) +
-    scale_color_manual(values = c("Student's t-test" = "#FFA500", 
-                                  "Welch's t-test" = "#0066CC"),
-                       name = "Method") +
-    scale_linetype_manual(values = c("Student's t-test" = "longdash",
-                                     "Welch's t-test" = "solid"),
-                          name = "Method") +
+  # Student's와 Welch's 분리
+  hl_student <- hl_subset[hl_subset$test == "Student's t-test", ]
+  hl_welch <- hl_subset[hl_subset$test == "Welch's t-test", ]
+  
+  p <- ggplot() +
+    # 배경 수평선 (Welch의 A, C만) - 연한 색상
+    geom_segment(data = bg_subset, 
+                 aes(x = 0.5, xend = 2.3, y = power, yend = power),
+                 color = "#0066CC", linetype = "solid",
+                 linewidth = 0.5, alpha = 0.3) +
+    # 라벨 추가 (A, C)
+    geom_text(data = bg_subset, 
+              aes(x = 2.4, y = power, label = Condition),
+              color = "#0066CC", hjust = 0, size = 2.8, alpha = 0.5) +
+    # Student's t-test 선 (longdash)
+    geom_line(data = hl_student, 
+              aes(x = Condition, y = power, group = group),
+              color = "#FFA500", linetype = "longdash",
+              linewidth = 0.8) +
+    geom_point(data = hl_student, 
+               aes(x = Condition, y = power, shape = factor(d)),
+               color = "#FFA500",
+               size = 2.5, stroke = 0.8) +
+    # Welch's t-test 선 (solid)
+    geom_line(data = hl_welch, 
+              aes(x = Condition, y = power, group = group),
+              color = "#0066CC", linetype = "solid",
+              linewidth = 0.8) +
+    geom_point(data = hl_welch, 
+               aes(x = Condition, y = power, shape = factor(d)),
+               color = "#0066CC",
+               size = 2.5, stroke = 0.8) +
     scale_shape_manual(values = c("0.2" = 16, "0.5" = 15, "0.8" = 17),
                        name = "Effect Size",
                        labels = c("d=0.2", "d=0.5", "d=0.8")) +
+    scale_x_discrete(limits = c("D", "E")) +
     labs(title = bquote(bold("N = " ~ .(N_value))),
          x = "",
          y = if(show_y_label) "Power" else "") +
     scale_y_continuous(breaks = seq(0, 1, 0.2), limits = c(0, 1.05)) +
+    coord_cartesian(clip = "off") + 
     theme_minimal() +
     theme(
       plot.title = element_text(hjust = 0.5, size = 13, face = "bold"),
@@ -576,49 +605,50 @@ create_line_panel <- function(data, N_value, show_y_label = FALSE) {
       axis.text = element_text(size = 11),
       legend.position = "none",
       panel.grid.major.x = element_blank(),
-      panel.grid.minor = element_blank()
+      panel.grid.minor = element_blank(),
+      plot.margin = margin(5, 5, 5, 10)
     )
   
   return(p)
 }
 
 # 3개 패널 생성 (첫 번째만 y축 라벨)
-panel_N60 <- create_line_panel(sim_data_line, 60, show_y_label = TRUE)
-panel_N120 <- create_line_panel(sim_data_line, 120, show_y_label = FALSE)
-panel_N240 <- create_line_panel(sim_data_line, 240, show_y_label = FALSE)
+panel_N60 <- create_line_panel(background_data, highlight_data, 60, show_y_label = TRUE)
+panel_N120 <- create_line_panel(background_data, highlight_data, 120, show_y_label = FALSE)
+panel_N240 <- create_line_panel(background_data, highlight_data, 240, show_y_label = FALSE)
 
-# 범례 생성
-legend_plot <- ggplot(legend_data, aes(x = x, y = y, 
-                                       color = test,
-                                       linetype = test,
-                                       shape = factor(d),
-                                       group = group)) +
-  geom_line(linewidth = 0.8) +
-  geom_point(size = 2.5, stroke = 0.8) +
-  scale_color_manual(values = c("Student's t-test" = "#FFA500", 
-                                "Welch's t-test" = "#0066CC"),
-                     name = "Method") +
-  scale_linetype_manual(values = c("Student's t-test" = "longdash",
-                                   "Welch's t-test" = "solid"),
-                        name = "Method") +
-  scale_shape_manual(values = c("0.2" = 16, "0.5" = 15, "0.8" = 17),
-                     name = "Effect Size",
-                     labels = c("d=0.2", "d=0.5", "d=0.8")) +
-  theme_minimal() +
-  theme(legend.position = "bottom",
-        legend.box = "horizontal",
-        legend.text = element_text(size = 10),
-        legend.title = element_text(size = 11, face = "bold"))
-
-legend <- get_legend(legend_plot)
+# 범례 생성용 데이터 (수동으로 생성)
+legend_grob <- grid::legendGrob(
+  labels = c("Student's t-test", "Welch's t-test", "d=0.2", "d=0.5", "d=0.8"),
+  pch = c(NA, NA, 16, 15, 17),
+  gp = grid::gpar(
+    col = c("#FFA500", "#0066CC", "black", "black", "black"),
+    lty = c(2, 1, 0, 0, 0),
+    lwd = c(2, 2, 0, 0, 0)
+  ),
+  nrow = 1
+)
 
 # 1×3 가로 배치
-combined_plot <- grid.arrange(
-  panel_N60, panel_N120, panel_N240,
-  ncol = 3,
-  bottom = textGrob("Condition\n", gp = gpar(fontsize = 12))
+combined_plot <- plot_grid(
+  plot_grid(panel_N60, panel_N120, panel_N240, ncol = 3),
+  ncol = 1,
+  rel_heights = c(1, 0.1)
 )
-print(combined_plot)
+
+# 하단에 x축 라벨 추가
+final_plot <- grid.arrange(
+  combined_plot,
+  bottom = textGrob("Condition", gp = gpar(fontsize = 12), 
+                    vjust = -1)
+)
+
+print(final_plot)
+
+# 저장
+ggsave("simulation_results_lineplot_revised2.png", final_plot, 
+       width = 9, height = 5.5, dpi = 600)
+
 
 # 저장
 ggsave("simulation_results_lineplotre.png", combined_plot, width = 10, height = 5, dpi = 600)
@@ -656,7 +686,7 @@ create_type1_panel <- function(data, N_value, show_y_label = FALSE) {
                                group = test)) +
     geom_line(linewidth = 0.8) +
     geom_point(size = 2.5, stroke = 0.8, shape = 16) +
-    geom_hline(yintercept = 0.05, linetype = "dotted", color = "red", linewidth = 0.5) +
+    geom_hline(yintercept = 0.05, linetype = "dotted", color = "red", linewidth = 0.6) +
     scale_color_manual(values = c("Student's t-test" = "#FFA500", 
                                   "Welch's t-test" = "#0066CC"),
                        name = "Method") +
@@ -725,4 +755,4 @@ combined_plot <- grid.arrange(
 # 범례 포함하여 저장
 g <- arrangeGrob(combined_plot, legend, ncol = 1, heights = c(0.9, 0.1))
 print(g)
-ggsave("type1_error_lineplot_ree.png", g, width = 10, height = 5, dpi = 600)
+ggsave("type1_error_lineplot_Fin.png", g, width = 9, height = 5.5, dpi = 600)
