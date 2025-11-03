@@ -673,26 +673,23 @@ type1_data <- data.frame(
   )
 )
 
-# 그룹 변수 생성
-type1_data$group <- paste(type1_data$test, type1_data$N, sep = "_")
-
 # 패널 생성 함수
 create_type1_panel <- function(data, N_value, show_y_label = FALSE) {
   subset_data <- data[data$N == N_value, ]
   
   p <- ggplot(subset_data, aes(x = Condition, y = error_rate, 
-                               color = test,
-                               linetype = test,
-                               group = test)) +
-    geom_line(linewidth = 0.8) +
-    geom_point(size = 2.5, stroke = 0.8, shape = 16) +
-    geom_hline(yintercept = 0.05, linetype = "dotted", color = "red", linewidth = 0.6) +
-    scale_color_manual(values = c("Student's t-test" = "#FFA500", 
-                                  "Welch's t-test" = "#0066CC"),
+                               fill = test, color = test)) +
+    geom_bar(stat = "identity", position = position_dodge(width = 0.8), 
+             width = 0.7, linewidth = 0.5) +
+    geom_hline(yintercept = 0.05, linetype = "dashed", color = "red", linewidth = 0.6) +
+    annotate("text", x = 0.6, y = 0.05, label = ".05", 
+             vjust = -0.5, hjust = 0, size = 5, color = "red") +
+    scale_fill_manual(values = c("Student's t-test" = "#FFA500", 
+                                 "Welch's t-test" = "#0066CC"),
+                      name = "Method") +
+    scale_color_manual(values = c("Student's t-test" = "#CC7A00", 
+                                  "Welch's t-test" = "#004C99"),
                        name = "Method") +
-    scale_linetype_manual(values = c("Student's t-test" = "longdash",
-                                     "Welch's t-test" = "solid"),
-                          name = "Method") +
     labs(title = bquote(bold("N = " ~ .(N_value))),
          x = "",
          y = if(show_y_label) "Type I Error Rate" else "") +
@@ -718,25 +715,19 @@ panel_N240 <- create_type1_panel(type1_data, 240, show_y_label = FALSE)
 
 # 범례 생성
 legend_data <- data.frame(
-  x = c(1, 2, 1, 2),
-  y = c(1, 1, 2, 2),
-  test = rep(c("Student's t-test", "Welch's t-test"), 2)
+  x = c(1, 2),
+  y = c(1, 1),
+  test = c("Student's t-test", "Welch's t-test")
 )
 
-legend_data$group <- legend_data$test
-
-legend_plot <- ggplot(legend_data, aes(x = x, y = y, 
-                                       color = test,
-                                       linetype = test,
-                                       group = test)) +
-  geom_line(linewidth = 0.8) +
-  geom_point(size = 2.5, stroke = 0.8, shape = 16) +
-  scale_color_manual(values = c("Student's t-test" = "#FFA500", 
-                                "Welch's t-test" = "#0066CC"),
+legend_plot <- ggplot(legend_data, aes(x = x, y = y, fill = test, color = test)) +
+  geom_bar(stat = "identity", linewidth = 0.5) +
+  scale_fill_manual(values = c("Student's t-test" = "#FFA500", 
+                               "Welch's t-test" = "#0066CC"),
+                    name = "Method") +
+  scale_color_manual(values = c("Student's t-test" = "#CC7A00", 
+                                "Welch's t-test" = "#004C99"),
                      name = "Method") +
-  scale_linetype_manual(values = c("Student's t-test" = "longdash",
-                                   "Welch's t-test" = "solid"),
-                        name = "Method") +
   theme_minimal() +
   theme(legend.position = "bottom",
         legend.box = "horizontal",
@@ -755,4 +746,6 @@ combined_plot <- grid.arrange(
 # 범례 포함하여 저장
 g <- arrangeGrob(combined_plot, legend, ncol = 1, heights = c(0.9, 0.1))
 print(g)
-ggsave("type1_error_lineplot_Fin.png", g, width = 9, height = 5.5, dpi = 600)
+
+
+ggsave("type1_error_barplot.png", g, width = 9, height = 5.5, dpi = 600)
