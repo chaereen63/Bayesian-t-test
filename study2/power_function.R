@@ -618,7 +618,7 @@ create_panel_AB <- function(power_df_A, power_df_B, sim_df_A, sim_df_B, label_po
   sim_df_combined <- rbind(sim_df_A, sim_df_B)
   
   # 제목
-  title_text <- bquote(bold("A & B") ~ ": " ~ n[2]/n[1] == 1 ~ ", " ~ rho == "1 & 0.5")
+  title_text <- bquote(bold("A & B") ~ ": " ~ n[2]/n[1] == 1 ~ ", " ~ rho == "1 or 0.5")
   
   p <- ggplot(power_df_combined, aes(x = d, y = power, color = test, linetype = test, 
                                      group = interaction(test, N, Condition))) +
@@ -738,4 +738,4 @@ combined_plot <- grid.arrange(
 print(combined_plot)
 
 # save
-ggsave("power_function_4panel_Fin.png", combined_plot, width = 9, height = 8, dpi = 600)
+ggsave("power_function_4panel_Finor.png", combined_plot, width = 9, height = 8, dpi = 600)
