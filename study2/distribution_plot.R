@@ -12,7 +12,7 @@ source("./study2/t-distribution.R")  # File containing theoretical distribution 
 source("./study2/Behrens-Fisher_distribution.R")
 
 #### Get all RDS files ####
-rds_files <- list.files("./study2/results5/", pattern = "^S24results.*\\.RDS$", full.names = TRUE)
+rds_files <- list.files("./study2/results3/", pattern = "^S22results.*\\.RDS$", full.names = TRUE)
 cat(sprintf("Found %d RDS files\n", length(rds_files)))
 cat("Files:\n")
 print(basename(rds_files))
@@ -263,7 +263,7 @@ combined_stats <- combined_stats %>%
   mutate(across(where(is.numeric), ~round(.x, 3)))
 
 # Save to Excel
-output_excel <- "./study2/results4/all_descriptive_stats.xlsx"
+output_excel <- "./study2/results3/all_descriptive_stats.xlsx"
 write_xlsx(combined_stats, output_excel)
 
 cat(sprintf("All descriptive statistics saved to: %s\n", output_excel))
@@ -273,7 +273,7 @@ cat(sprintf("Total rows: %d (should be %d files × 5 conditions = %d)\n",
             length(rds_files) * 5))
 
 # Also save as CSV as backup
-output_csv <- "./study2/results4/all_descriptive_stats.csv"
+output_csv <- "./study2/results3/all_descriptive_stats.csv"
 write.csv(combined_stats, output_csv, row.names = FALSE)
 cat(sprintf("CSV backup saved to: %s\n", output_csv))
 
