@@ -7,7 +7,7 @@ alpha <- 0.05
 
 # Welch's t-test Power function
 welch_power <- function(d, var1, var2, n1, n2, alpha = 0.05) {
-  kappa <- n2/n1
+  m <- n2/n1
   N <- (n1 + n2)
   rho <- var2/var1
   
@@ -15,7 +15,7 @@ welch_power <- function(d, var1, var2, n1, n2, alpha = 0.05) {
   df <- (var1/n1 + var2/n2)^2 / ((var1/n1)^2/(n1-1) + (var2/n2)^2/(n2-1))
   
   # weight in NCP
-  w <- sqrt((N/2) * ((kappa*(1+rho)) / ((1+kappa)*(kappa+rho))))
+  w <- sqrt((N/2) * ((m*(1+rho)) / ((1+m)*(m+rho))))
   
   # NCP
   ncp <- d * w
@@ -36,9 +36,9 @@ var1 <- 4  # 첫 번째 그룹의 분산
 var2 <- 2  # 두 번째 그룹의 분산 (rho = 0.5)
 rho <- var2/var1
 
-# kappa 값과 라벨을 직접 정의
-kappa_config <- data.frame(
-  kappa_label = c("1/4", "1/3", "1/2", "2/3", "1", "3/2", "2", "3", "4"),
+# m 값과 라벨을 직접 정의
+m_config <- data.frame(
+  m_label = c("1/4", "1/3", "1/2", "2/3", "1", "3/2", "2", "3", "4"),
   n1 = c(96, 90, 80, 72, 60, 48, 40, 30, 24),
   n2 = c(24, 30, 40, 48, 60, 72, 80, 90, 96),
   stringsAsFactors = FALSE
@@ -47,10 +47,10 @@ kappa_config <- data.frame(
 # Power 계산
 power_list <- list()
 
-for(i in 1:nrow(kappa_config)) {
-  n1 <- kappa_config$n1[i]
-  n2 <- kappa_config$n2[i]
-  kappa_label <- kappa_config$kappa_label[i]
+for(i in 1:nrow(m_config)) {
+  n1 <- m_config$n1[i]
+  n2 <- m_config$n2[i]
+  m_label <- m_config$m_label[i]
   
   # Welch's t-test power 계산
   power_values <- numeric(length(d_values))
@@ -62,8 +62,8 @@ for(i in 1:nrow(kappa_config)) {
   temp_df <- data.frame(
     d = d_values,
     power = power_values,
-    kappa_label = kappa_label,
-    kappa = n2/n1,
+    m_label = m_label,
+    m = n2/n1,
     n1 = n1,
     n2 = n2
   )
@@ -74,9 +74,9 @@ for(i in 1:nrow(kappa_config)) {
 # 모든 데이터 합치기
 power_df <- do.call(rbind, power_list)
 
-# kappa_label을 factor로 변환하여 순서 지정
-power_df$kappa_label <- factor(power_df$kappa_label, 
-                               levels = c("1/4", "1/3", "1/2", "2/3", "1", "3/2", "2", "3", "4"))
+# m_label을 factor로 변환하여 순서 지정
+power_df$m_label <- factor(power_df$m_label, 
+                           levels = c("1/4", "1/3", "1/2", "2/3", "1", "3/2", "2", "3", "4"))
 
 # 더 구분되는 색상과 선 스타일 조합
 colors <- c(
@@ -99,20 +99,20 @@ linetypes <- c("solid", "dashed", "dotted", "dotdash", "solid",
 linewidths <- c(0.8, 0.8, 0.8, 0.8, 1.5, 0.8, 0.8, 0.8, 0.8)
 
 # 플롯 생성
-p <- ggplot(power_df, aes(x = d, y = power, color = kappa_label, 
-                          linetype = kappa_label, group = kappa_label)) +
-  geom_line(aes(size = kappa_label)) +
+p <- ggplot(power_df, aes(x = d, y = power, color = m_label, 
+                          linetype = m_label, group = m_label)) +
+  geom_line(aes(size = m_label)) +
   scale_color_manual(values = colors,
-                     name = bquote(kappa == n[2]/n[1])) +
+                     name = bquote(m == n[2]/n[1])) +
   scale_linetype_manual(values = linetypes,
-                        name = bquote(kappa == n[2]/n[1])) +
+                        name = bquote(m == n[2]/n[1])) +
   scale_size_manual(values = linewidths,
                     guide = "none") +
   labs(title = bquote("Welch's t-test Power Functions: " ~ 
                         N == .(N) ~ ", " ~ rho == .(round(rho, 2))),
        x = "Effect Size (Cohen's d)",
        y = "Power") +
-  scale_y_continuous(breaks = seq(0, 1, 0.05), limits = c(0.5, 0.8)) +
+  scale_y_continuous(breaks = seq(0, 1, 0.05), limits = c(0, 1)) +
   scale_x_continuous(breaks = seq(0, 1, 0.2), limits = c(0, 1)) +
   geom_hline(yintercept = 0.8, linetype = "dotted", color = "gray50", alpha = 0.5) +
   theme_minimal() +
@@ -130,22 +130,24 @@ p <- ggplot(power_df, aes(x = d, y = power, color = kappa_label,
 
 print(p)
 
-# 특정 effect size에서 각 kappa의 power 확인
+# 특정 effect size에서 각 m의 power 확인
 test_d <- 0.5
 
-cat("\nPower at d =", test_d, ":\n")
-for(i in 1:nrow(kappa_config)) {
-  n1 <- kappa_config$n1[i]
-  n2 <- kappa_config$n2[i]
-  kappa_label <- kappa_config$kappa_label[i]
-  
-  power_val <- welch_power(test_d, var1, var2, n1, n2, alpha)
-  
-  cat(sprintf("κ = %s (n1=%d, n2=%d): Power = %.4f\n", 
-              kappa_label, n1, n2, power_val))
+{
+  cat("\nPower at d =", test_d, ":\n")
+  for(i in 1:nrow(m_config)) {
+    n1 <- m_config$n1[i]
+    n2 <- m_config$n2[i]
+    m_label <- m_config$m_label[i]
+    
+    power_val <- welch_power(test_d, var1, var2, n1, n2, alpha)
+    
+    cat(sprintf("m = %s (n1=%d, n2=%d): Power = %.4f\n", 
+                m_label, n1, n2, power_val))
+  }
 }
 
-#### kappa, rho function ####
+#### m, rho function ####
 library(ggplot2)
 library(viridis)
 
@@ -154,20 +156,20 @@ N <- 120
 alpha <- 0.05
 d <- 0.5  # 고정된 effect size
 
-# κ와 ρ의 범위
-kappa_range <- seq(0.2, 5, length.out = 100)
+# m와 ρ의 범위
+m_range <- seq(0.2, 5, length.out = 100)
 rho_range <- seq(0.2, 5, length.out = 100)
 
 # Power 계산을 위한 grid 생성
-power_grid <- expand.grid(kappa = kappa_range, rho = rho_range)
+power_grid <- expand.grid(m = m_range, rho = rho_range)
 
 # 각 조합에 대해 power 계산
 power_grid$power <- sapply(1:nrow(power_grid), function(i) {
-  kappa <- power_grid$kappa[i]
+  m <- power_grid$m[i]
   rho <- power_grid$rho[i]
   
   # n1, n2 계산
-  n1 <- round(N / (1 + kappa))
+  n1 <- round(N / (1 + m))
   n2 <- N - n1
   
   # var1을 1로 고정하고 var2 = rho * var1
@@ -181,13 +183,13 @@ power_grid$power <- sapply(1:nrow(power_grid), function(i) {
   return(power)
 })
 
-# Contour plot
-p1 <- ggplot(power_grid, aes(x = kappa, y = rho, z = power)) +
+# Heatmap plot
+p1 <- ggplot(power_grid, aes(x = m, y = rho, z = power)) +
   geom_contour_filled(bins = 20) +
   geom_contour(color = "white", alpha = 0.3, bins = 20) +
   scale_fill_viridis_d(option = "plasma", name = "Power") +
   labs(title = bquote("Welch's t-test Power: N=" ~ .(N) ~ ", d=" ~ .(d)),
-       x = bquote(kappa == n[2]/n[1]),
+       x = bquote(m == n[2]/n[1]),
        y = bquote(rho == sigma[2]^2/sigma[1]^2)) +
   geom_hline(yintercept = 1, linetype = "dashed", color = "white", alpha = 0.5) +
   geom_vline(xintercept = 1, linetype = "dashed", color = "white", alpha = 0.5) +
@@ -202,38 +204,50 @@ print(p1)
 
 # special condition points
 special_points <- data.frame(
-  kappa = c(1, 1/2, 1/3, 2/3),
+  m = c(1, 1/2, 1/3, 2/3),
   rho = c(1, 1/2, 1/2, 1/2),
-  label = c("Reference", "Condition 1", "Condition 2", "Condition 3"),
+  label = c("1", "1/2", "1/3", "2/3"),
   color = c("red", "black", "black", "black")
 )
+# points for vertical lines (excluding m=1)
+special_points_vline <- special_points[special_points$m != 1, ]
 
 # Contour plot
-p2 <- ggplot(power_grid, aes(x = kappa, y = rho, z = power)) +
+p2 <- ggplot(power_grid, aes(x = m, y = rho, z = power)) +
   geom_contour_filled(bins = 20) +
   geom_contour(color = "white", alpha = 0.3, bins = 20) +
   scale_fill_viridis_d(option = "plasma", name = "Power") +
   geom_hline(yintercept = 1, linetype = "dashed", color = "white", alpha = 0.5) +
   geom_vline(xintercept = 1, linetype = "dashed", color = "white", alpha = 0.5) +
+  # add vertical lines from special points to m-axis
+  geom_segment(data = special_points_vline,
+               aes(x = m, xend = m, y = rho, yend = 0),
+               linetype = "dotted", color = "gray30", size = 0.5,
+               inherit.aes = FALSE) +
   # add special points
   geom_point(data = special_points, 
-             aes(x = kappa, y = rho, color = color),
+             aes(x = m, y = rho, color = color),
              size = 1.5, shape = 16, inherit.aes = FALSE) +
-  geom_text(data = special_points,
-            aes(x = kappa, y = rho, label = paste0(round(kappa, 1))),
-            vjust = 2, size = 2.3, color = "black",
+  # add m coordinates on x-axis
+  geom_text(data = special_points_vline,
+            aes(x = m, y = -0.15, label = label),
+            size = 2.5, color = "black",
             inherit.aes = FALSE) +
   scale_color_identity() +  # color를 직접 지정
-  labs(title = bquote("Welch's t-test Power: N=" ~ .(N) ~ ", d=" ~ .(d)),
-       x = bquote(kappa == n[2]/n[1]),
-       y = bquote(rho == sigma[2]^2/sigma[1]^2)) +
+  labs(title = bquote("Welch's "* italic(t)*"-test Power as a Function of m and ρ"),
+       subtitle = bquote("N =" ~ .(N)*" & " * italic(d) * " = " ~ .(d)),
+       x = bquote(m == n[2]/n[1]),
+       y = bquote(rho == sigma[2]^2/sigma[1]^2))+
+  
   guides(fill = guide_legend(reverse = TRUE)) +  # legend
   theme_minimal() +
   theme(
     plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
     axis.title = element_text(size = 12),
     legend.position = "right"
-  )
+  ) +
+  coord_cartesian(clip = "off", ylim = c(0.2, 5))
+
 print(p2)
 
-ggsave("./study2/heatmap.png", p2, width = 8,height = 6,dpi=600)
+ggsave("./study2/heatmap4.png", p2, width = 10,height = 6,dpi=600)

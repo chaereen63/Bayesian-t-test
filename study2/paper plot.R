@@ -6,7 +6,7 @@ library(ggplot2)
 library(purrr)
 library(moments)  # For skewness and kurtosis calculation
 
-results <- readRDS("./study2/results4/S23results60_E0.RDS")
+results <- readRDS("./study2/results_all/S22results120_E5_2.RDS")
 # Load necessary functions
 source("./study2/t-distribution.R")  # File containing theoretical distribution functions
 source("./study2/Behrens-Fisher_distribution.R")
@@ -41,7 +41,7 @@ condition_params <- results %>%
   }
 
 #### Calculate Descriptive Statistics for Sampling Distributions ####
-cat("=== Descriptive Statistics of Sampling Distributions (Mean, Skewness, Kurtosis) ===\n\n")
+{cat("=== Descriptive Statistics of Sampling Distributions (Mean, Skewness, Kurtosis) ===\n\n")
 
 descriptive_stats <- results %>%
   group_by(scenario) %>%
@@ -71,7 +71,7 @@ for(i in 1:5) {
               descriptive_stats$welch_skewness[i],
               descriptive_stats$welch_kurtosis[i]))
 }
-
+}
 # Save descriptive statistics
 write.csv(descriptive_stats, "./study2/results3/descriptive_stats.csv", row.names = FALSE)
 cat("Descriptive statistics saved to './study2/results3/descriptive_stats.csv'\n\n")
@@ -464,8 +464,8 @@ create_welch_comparison_plot <- function() {
       panel.background = element_rect(fill = "white", color = NA)
     ) +
     
-    scale_fill_manual(values = c("#FF7F00", "#4DAF4A")) +
-    scale_color_manual(values = c("#FF7F00", "#4DAF4A"))
+    scale_fill_manual(values = c("#0984CC", "#0066CC")) +
+    scale_color_manual(values = c("#0984CC", "#0066CC"))
   
   return(p)
 }
